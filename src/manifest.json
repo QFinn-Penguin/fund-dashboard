@@ -1,0 +1,63 @@
+{
+  "author": "LiuRabt",
+  "name": "基金看板 - 实时查看基金与持仓收益",
+  "description": "基金看板，实时查看自选基金、持仓收益、指数与持仓明细",
+  "version": null,
+  "manifest_version": 3,
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "homepage_url": "http://rabt.gitee.io/funds/docs/dist/index.html",
+  "action": {
+    "default_icon": {
+      "19": "icons/icon19.png",
+      "38": "icons/icon38.png"
+    },
+    "default_title": "基金看板",
+    "default_popup": "popup/popup.html"
+  },
+  "options_ui": {
+    "page": "options/options.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.eastmoney.com/*"
+      ],
+      "js": [
+        "content/bridge.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "page/holdings-bridge.js"
+      ],
+      "matches": [
+        "https://*.eastmoney.com/*"
+      ]
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://fundmobapi.eastmoney.com https://fundsuggest.eastmoney.com https://push2.eastmoney.com https://fundgz.1234567.com.cn"
+  },
+  "permissions": [
+    "storage",
+    "contextMenus",
+    "alarms",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://fundmobapi.eastmoney.com/*",
+    "https://fundsuggest.eastmoney.com/*",
+    "https://push2.eastmoney.com/*",
+    "https://fundgz.1234567.com.cn/*"
+  ]
+}

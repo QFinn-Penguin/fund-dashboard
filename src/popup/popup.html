@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <title>基金看板</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link rel="stylesheet" href="popup.css">
+  <% if (NODE_ENV === 'development') { %>
+  <!-- Load some resources only in development environment -->
+  <% } %>
+</head>
+<style>
+  html,
+  body,
+  #app {
+    width: 785px;
+    min-width: 785px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    box-sizing: border-box;
+    border: 0;
+    outline: 0;
+    background-color: #f5f7fb;
+  }
+
+  html.popup-root-dark,
+  body.popup-root-dark,
+  #app.popup-root-dark {
+    background-color: #0f1217 !important;
+    color-scheme: dark;
+    box-shadow: none !important;
+  }
+
+  html.popup-root-light,
+  body.popup-root-light,
+  #app.popup-root-light {
+    color-scheme: light;
+  }
+
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+    background-color: rgba(240, 240, 240, 1);
+  }
+
+  ::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 0px rgba(240, 240, 240, 0.5);
+    border-radius: 10px;
+    background-color: rgba(240, 240, 240, 0.5);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    box-shadow: inset 0 0 0px rgba(240, 240, 240, 0.5);
+    background-color: #cccccc;
+  }
+
+  html.popup-root-dark,
+  body.popup-root-dark,
+  #app.darkMode,
+  #app.darkMode *,
+  #app.popup-root-dark,
+  #app.popup-root-dark * {
+    scrollbar-color: rgba(90, 164, 255, 0.36) #141921;
+  }
+
+  html.popup-root-dark::-webkit-scrollbar,
+  body.popup-root-dark::-webkit-scrollbar,
+  #app.darkMode::-webkit-scrollbar,
+  #app.darkMode *::-webkit-scrollbar,
+  #app.popup-root-dark::-webkit-scrollbar,
+  #app.popup-root-dark *::-webkit-scrollbar {
+    background-color: #141921;
+  }
+
+  html.popup-root-dark::-webkit-scrollbar-track,
+  body.popup-root-dark::-webkit-scrollbar-track,
+  #app.darkMode::-webkit-scrollbar-track,
+  #app.darkMode *::-webkit-scrollbar-track,
+  #app.popup-root-dark::-webkit-scrollbar-track,
+  #app.popup-root-dark *::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 0px rgba(15, 18, 23, 0.6);
+    border-radius: 10px;
+    background-color: rgba(20, 25, 33, 0.92);
+  }
+
+  html.popup-root-dark::-webkit-scrollbar-thumb,
+  body.popup-root-dark::-webkit-scrollbar-thumb,
+  #app.darkMode::-webkit-scrollbar-thumb,
+  #app.darkMode *::-webkit-scrollbar-thumb,
+  #app.popup-root-dark::-webkit-scrollbar-thumb,
+  #app.popup-root-dark *::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    box-shadow: inset 0 0 0px rgba(15, 18, 23, 0.32);
+    background-color: rgba(90, 164, 255, 0.36);
+  }
+
+  html.popup-root-dark::-webkit-scrollbar-corner,
+  body.popup-root-dark::-webkit-scrollbar-corner,
+  #app.darkMode::-webkit-scrollbar-corner,
+  #app.darkMode *::-webkit-scrollbar-corner,
+  #app.popup-root-dark::-webkit-scrollbar-corner,
+  #app.popup-root-dark *::-webkit-scrollbar-corner {
+    background-color: #141921;
+  }
+
+  a:link,
+  a:active,
+  a:visited,
+  a:hover {
+    color: #409eff;
+    text-decoration: none;
+  }
+  .darkMode a {
+    color:rgba(64, 158, 255, 0.6);
+  }
+
+  a:hover {
+    text-decoration: underline;
+  }
+</style>
+
+<body>
+  <div id="app">
+
+  </div>
+  <script src="popup.js"></script>
+</body>
+
+</html>
