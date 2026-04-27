@@ -35,7 +35,6 @@
       </ul>
     </li>
     <li><a href="#使用说明">使用说明</a></li>
-    <li><a href="#后续计划">后续计划</a></li>
     <li><a href="#许可证">许可证</a></li>
   </ol>
 </details>
@@ -46,7 +45,17 @@
 
 > 当前截图资源已统一放在 `docs/images/readme/` 目录下，下面的展示区已经使用这些真实路径。
 
-当前可对应的主要页面包括：
+### 本次更新亮点
+
+这一版在原有基金看板的基础上，重点补充和调整了下面这些内容：
+
+* **新增仓位管理**：在原系统中补上仓位管理能力，用于维护加仓 / 减仓记录、持仓成本、当前份额和相关历史信息。
+* **全面优化界面样式**：对 popup、详情页和设置页的整体视觉风格、排版细节与阅读体验做了系统性调整。
+* **新增上一个交易日涨跌幅**：除了当前估值和收益信息外，也补充了上一个交易日的涨跌幅展示，便于做近一日对比。
+* **新增快捷键切换分组和页数**：日常查看时可以更快地在不同分组和分页之间切换，减少鼠标操作。
+* **升级到 Chrome Extension Manifest V3**：扩展清单与构建结果已经适配 Manifest V3，以兼容新版 Chrome / Edge 浏览器扩展体系。
+
+当前主要页面包括：
 
 * 基金首页：展示指数概览、当前分组、收益概览、基金列表与底部快捷操作
 * 编辑页：用于向当前分组添加基金，并进入持仓控制面板
@@ -54,19 +63,9 @@
 * 设置页面：调整基础显示、主题、角标提醒和数据管理相关选项
 * 大盘行情页：查看市场资金流向、成交额变化和整体行情概览
 
-它更适合这些场景：
+它适合想在桌面端高频查看基金涨跌、估值和持仓收益，或者需要按主题、策略、账户分组管理基金的人使用；也适合希望把基金详情、指数行情、持仓结构和常用设置收在同一个扩展里的人。
 
-* 想在桌面端高频查看基金涨跌、估值和持仓收益
-* 需要按主题、策略或账户分组管理基金
-* 希望把基金详情、指数行情、持仓结构和常用设置收在同一个扩展里
-
-这也是它值得使用的原因：
-
-* 你可以把高频查看基金状态的动作压缩到浏览器小窗里完成
-* 你不需要为了看估值、收益、分组和行情在多个页面之间来回切换
-* 当前仓库已经把 popup、设置页、bridge 链路和打包脚本组织成一套完整的扩展工程
-
-仓库里的实现还明确体现了这些事实：
+从当前仓库实现来看，你可以直接在浏览器小窗里完成高频查看动作，不需要为了看估值、收益、分组和行情在多个页面之间来回切换。仓库本身也已经把 popup、设置页、bridge 链路和打包脚本组织成一套完整的扩展工程，并明确体现了这些能力：
 
 * Popup 主界面包含当前分组、收益概览和运行状态等总览信息
 * 持仓相关能力通过 bridge 链路获取，并依赖东方财富相关页面与接口环境
@@ -124,7 +123,6 @@
 * 两市成交额与涨跌家数
 * 资金净流入走势
 
-<p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
 ### 技术组成
 
@@ -134,11 +132,10 @@
 * ECharts
 * Chrome Extension Manifest V3
 
-<p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
 ## 快速开始
 
-下面是基于当前仓库真实脚本整理的本地启动方式。这个项目不是传统 Web 服务，不需要运行本地站点；核心路径是安装依赖、构建扩展、再在浏览器中加载 `dist/` 目录。
+这个项目不是传统 Web 服务，不需要运行本地站点；安装方式主要分为两种：**本地构建** 和 **从 GitHub Release 下载构建产物**。无论使用哪一种方式，最终都是在浏览器扩展管理页中加载解压后的扩展目录。
 
 ### 前置条件
 
@@ -147,6 +144,8 @@
 * 支持 Manifest V3 的 Chrome / Edge 浏览器
 
 ### 安装方式
+
+#### 方式一：本地构建安装
 
 1. 安装依赖
    ```sh
@@ -159,7 +158,17 @@
 3. 打开 Chrome / Edge 扩展管理页
 4. 开启“开发者模式”
 5. 选择“加载已解压的扩展程序”
-6. 选择项目下的 `dist/` 目录
+6. 选择项目下构建生成的 `dist/` 目录
+
+#### 方式二：从 GitHub Release 下载
+
+1. 打开当前仓库的 GitHub Release 页面
+2. 下载发布附件中的压缩包，例如 `fund-dashboard-v1.0.0.zip`
+3. 将压缩包解压到本地目录
+4. 打开 Chrome / Edge 扩展管理页
+5. 开启“开发者模式”
+6. 选择“加载已解压的扩展程序”
+7. 选择解压后的扩展目录
 
 如果你是在开发过程中持续调试，也可以使用：
 
@@ -173,9 +182,8 @@ npm run watch:dev
 npm run build-zip
 ```
 
-该命令会读取 `package.json` 中的 `name` 和 `version`，并在 `dist-zip/` 下生成形如 `fund-dashboard-v1.0.0.zip` 的压缩包。
+该命令会读取 `package.json` 中的 `name` 和 `version`，并在 `dist-zip/` 下生成形如 `fund-dashboard-v1.0.0.zip` 的压缩包；这个压缩包可以直接作为 GitHub Release 附件上传。
 
-<p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
 ## 使用说明
 
@@ -207,39 +215,12 @@ npm run build-zip
 * 浏览器小窗受宿主环境和网络状态影响，刷新体验不一定始终稳定
 * README 中列出的权限、访问域名和数据来源，以当前仓库中的配置和代码为准
 
-如果你想继续了解实现细节，当前仓库里最关键的结构如下：
-
-```text
-src/
-  background.js            后台逻辑、角标、代理请求
-  manifest.json            扩展清单
-  popup/                   主弹窗
-  options/                 设置页
-  content/bridge.js        content script 桥接
-  page/holdings-bridge.js  页面上下文持仓桥接
-  common/                  详情页、图表、行情组件
-scripts/
-  build-zip.js             打包 zip 文件
-```
-
-<p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
 [fund-home-screenshot]: docs/images/readme/fund-home.png
 [edit-page-screenshot]: docs/images/readme/edit-page.png
 [position-manager-screenshot]: docs/images/readme/position-manager.png
 [settings-page-screenshot]: docs/images/readme/settings-page.png
 [market-detail-screenshot]: docs/images/readme/market-detail.png
-
-## 后续计划
-
-- [x] 生成生产构建并加载本地扩展
-- [x] 提供 popup 主界面与设置页
-- [x] 支持基金、指数与持仓相关信息查看
-- [x] 提供 ZIP 打包脚本
-- [x] 补充可直接复用的界面截图资源
-- [ ] 持续整理 README 与实现细节的一致性
-
-<p align="right">(<a href="#readme-top">回到顶部</a>)</p>
 
 ## 许可证
 
