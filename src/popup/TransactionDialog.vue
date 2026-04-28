@@ -31,7 +31,7 @@
           <strong>{{ roundValueHandler(activeTransactionFund.num, 2) }}</strong>
         </div>
         <div class="transaction-dialog__summary-block">
-          <span>持有额</span>
+          <span>持仓金额</span>
           <strong>{{ formatMoneyDisplayHandler(activeTransactionFund.amount) }}</strong>
         </div>
         <div class="transaction-dialog__summary-block">

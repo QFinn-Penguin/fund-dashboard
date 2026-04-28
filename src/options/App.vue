@@ -113,7 +113,7 @@
               </div>
               <div class="setting-row setting-row--switch compact">
                 <div class="setting-main">
-                  <div class="setting-label">显示持有金额</div>
+                  <div class="setting-label">显示持仓金额</div>
                   <div class="setting-help">为收益额和持仓估值提供基础数据。</div>
                 </div>
                 <el-switch
@@ -139,8 +139,8 @@
               <div class="setting-panel__title">收益信息</div>
               <div class="setting-row setting-row--switch compact">
                 <div class="setting-main">
-                  <div class="setting-label">显示当日收益</div>
-                  <div class="setting-help">按持有份额显示当前口径对应的当日收益。</div>
+                  <div class="setting-label">显示当日估算收益</div>
+                  <div class="setting-help">按持有份额显示当前口径对应的当日估算收益。</div>
                 </div>
                 <el-switch
                   v-model="showGains"
@@ -194,7 +194,7 @@
             </div>
           </div>
           <div class="help-panel">
-            在编辑设置里，输入持有份额可计算当日收益，输入持仓成本可计算累计持有收益。
+            在编辑设置里，输入持有份额可计算当日估算收益，输入持仓成本可计算累计持有收益。
           </div>
         </div>
       </section>
@@ -253,7 +253,7 @@
           <ul class="help-list">
             <li>当前分组特别关注：显示当前分组里标记为特别关注的基金。</li>
             <li>当前分组全部基金：只汇总当前分组中的全部基金。</li>
-            <li>若要计算收益额，请先打开“显示持有金额”并填写对应基金的持有额。</li>
+            <li>若要计算收益额，请先打开“显示持仓金额”并填写对应基金的持仓金额。</li>
           </ul>
         </div>
       </section>

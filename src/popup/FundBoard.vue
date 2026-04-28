@@ -40,7 +40,7 @@
                 <th class="fund-table__input">成本价</th>
                 <th class="fund-table__input">持有份额</th>
                 <th @click="sortListHandler('amount')" class="pointer">
-                  持有额
+                  持仓金额
                   <span :class="sortType.amount" class="down-arrow"></span>
                 </th>
                 <th class="fund-table__operation">仓位管理</th>
@@ -53,7 +53,7 @@
               <template v-else>
                 <th v-if="showGSZ">估算净值</th>
                 <th v-if="showAmount" @click="sortListHandler('amount')" class="pointer">
-                  持有额
+                  持仓金额
                   <span :class="sortType.amount" class="down-arrow"></span>
                 </th>
                 <th v-if="showCost" @click="sortListHandler('costGains')" class="pointer">
@@ -69,7 +69,7 @@
                   <span :class="sortType.gszzl" class="down-arrow"></span>
                 </th>
                 <th v-if="showGains" @click="sortListHandler('gains')" class="pointer">
-                  当日收益
+                  当日估算收益
                   <span :class="sortType.gains" class="down-arrow"></span>
                 </th>
                 <th>更新时间</th>

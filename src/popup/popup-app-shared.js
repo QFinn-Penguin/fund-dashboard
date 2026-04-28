@@ -120,10 +120,10 @@ export const sharedMethods = {
     if (hasReplace) {
       return "--";
     } else {
-      if (val.todayGainMode === "rate" && Number.isFinite(Number(val.gszzl)) && Number.isFinite(Number(val.dwjz))) {
+      if (Number.isFinite(Number(val.gsz)) && Number.isFinite(Number(val.dwjz))) {
+        sum = ((Number(val.gsz) - Number(val.dwjz)) * num).toFixed(2);
+      } else if (val.todayGainMode === "rate" && Number.isFinite(Number(val.gszzl)) && Number.isFinite(Number(val.dwjz))) {
         sum = ((Number(val.dwjz) - Number(val.dwjz) / (1 + Number(val.gszzl) * 0.01)) * num).toFixed(2);
-      } else if (val.gsz) {
-        sum = ((val.gsz - val.dwjz) * num).toFixed(2);
       }
     }
     return sum;
