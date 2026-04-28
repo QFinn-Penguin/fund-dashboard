@@ -327,7 +327,7 @@ export default {
     },
     overviewDayGainMeta() {
       if (!this.showGains) {
-        return "可在设置中开启估算收益";
+        return "可在设置中开启当日收益";
       }
       return !isNaN(this.allGains[1]) ? `${this.allGains[1]}%` : "等待估值中";
     },

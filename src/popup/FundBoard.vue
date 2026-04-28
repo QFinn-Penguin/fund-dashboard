@@ -65,11 +65,11 @@
                   <span :class="sortType.costGainsRate" class="down-arrow"></span>
                 </th>
                 <th @click="sortListHandler('gszzl')" class="pointer">
-                  涨跌幅
+                  最新涨跌幅
                   <span :class="sortType.gszzl" class="down-arrow"></span>
                 </th>
                 <th v-if="showGains" @click="sortListHandler('gains')" class="pointer">
-                  估算收益
+                  当日收益
                   <span :class="sortType.gains" class="down-arrow"></span>
                 </th>
                 <th>更新时间</th>
@@ -175,14 +175,15 @@
                 <td :class="[resolveTrendClassHandler(el.gszzl, el.hasReplace), el.hasReplace ? 'is-stale' : '']">
                   <div class="change-cell">
                     <div class="change-cell__today">
-                      {{ el.hasReplace ? '未更新' : `今：${el.gszzl}%` }}
+                      {{ el.hasReplace ? '未更新' : `最新：${el.gszzl}%` }}
                     </div>
-                    <p
-                      v-if="!el.hasReplace && showPrevGszzl && el.prevGszzl !== '' && el.prevGszzl !== null && el.prevGszzl !== undefined"
-                      :class="['sub-change', el.prevGszzl >= 0 ? 'up' : 'down']"
-                    >
-                      昨：{{ el.prevGszzl }}%
-                    </p>
+                     <p
+                        v-if="!el.hasReplace && showPrevGszzl && el.prevGszzl !== '' && el.prevGszzl !== null && el.prevGszzl !== undefined"
+                        :class="['sub-change', el.prevGszzl >= 0 ? 'up' : 'down']"
+                        :title="`次值（上个交易日）：${el.prevGszzl}%`"
+                      >
+                        次值：{{ el.prevGszzl }}%
+                      </p>
                   </div>
                 </td>
                 <td v-if="showGains" :class="[resolveTrendClassHandler(el.gains, el.hasReplace), el.hasReplace ? 'is-stale' : '']">

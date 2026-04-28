@@ -89,6 +89,24 @@ export const fetchMethods = {
               !Number.isNaN(parseFloat(estimateData.gsz)) &&
               !Number.isNaN(parseFloat(estimateData.gszzl));
 
+            const estimateDayChangeRate = hasRealtimeEstimate
+              ? parseFloat(estimateData.gszzl)
+              : Number.NaN;
+
+            const latestNavChangeRate =
+              latest && !Number.isNaN(parseFloat(latest.JZZZL))
+                ? parseFloat(latest.JZZZL)
+                : Number.NaN;
+
+            const resolvedTodayChangeRate = hasRealtimeEstimate
+              ? Number.isFinite(estimateDayChangeRate)
+                ? estimateDayChangeRate
+                : latestNavChangeRate
+              : latestNavChangeRate;
+
+            const useRateBasedDayGain =
+              hasRealtimeEstimate && Number.isFinite(resolvedTodayChangeRate);
+
             if (!latest && !hasRealtimeEstimate) {
               return null;
             }
@@ -115,11 +133,8 @@ export const fetchMethods = {
                 : latest && !Number.isNaN(parseFloat(latest.DWJZ))
                 ? parseFloat(latest.DWJZ)
                 : null,
-              gszzl: hasRealtimeEstimate
-                ? parseFloat(estimateData.gszzl)
-                : latest && !Number.isNaN(parseFloat(latest.JZZZL))
-                ? parseFloat(latest.JZZZL)
-                : 0,
+              gszzl: Number.isFinite(resolvedTodayChangeRate) ? resolvedTodayChangeRate : 0,
+              todayGainMode: useRateBasedDayGain ? "rate" : "estimate",
               prevGszzl:
                 hasRealtimeEstimate && latest && !Number.isNaN(parseFloat(latest.JZZZL))
                   ? parseFloat(latest.JZZZL).toFixed(2)

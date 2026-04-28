@@ -139,8 +139,8 @@
               <div class="setting-panel__title">收益信息</div>
               <div class="setting-row setting-row--switch compact">
                 <div class="setting-main">
-                  <div class="setting-label">显示估值收益</div>
-                  <div class="setting-help">按持有份额显示盘中估值收益。</div>
+                  <div class="setting-label">显示当日收益</div>
+                  <div class="setting-help">按持有份额显示当前口径对应的当日收益。</div>
                 </div>
                 <el-switch
                   v-model="showGains"
@@ -194,7 +194,7 @@
             </div>
           </div>
           <div class="help-panel">
-            在编辑设置里，输入持有份额可计算当日估值收益，输入持仓成本可计算累计持有收益。
+            在编辑设置里，输入持有份额可计算当日收益，输入持仓成本可计算累计持有收益。
           </div>
         </div>
       </section>

@@ -108,7 +108,7 @@
         </div>
         <div class="tab-col overview-card overview-card--toggle" :class="overviewDayClass">
           <div class="overview-card__label overview-card__label--inline">
-            <span class="overview-card__label-text">当日估值收益</span>
+            <span class="overview-card__label-text">当日收益</span>
             <button
               v-if="showGains"
               class="overview-card__toggle overview-card__toggle--inline"

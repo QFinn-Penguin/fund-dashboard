@@ -222,6 +222,13 @@ npm run build-zip
 [settings-page-screenshot]: docs/images/readme/settings-page.png
 [market-detail-screenshot]: docs/images/readme/market-detail.png
 
+## 支持项目
+
+如果这个项目对你有帮助，欢迎点个 **Star** 支持一下。  
+开源不易，持续优化也不易；如果你愿意，也可以通过赞赏支持后续维护与更新。
+
+你的支持会直接转化为后续版本的修复、优化和新功能完善。
+
 ## 许可证
 
 Distributed under the GPL-3.0 License. See `LICENSE` for more information.
