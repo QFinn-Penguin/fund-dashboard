@@ -9,20 +9,28 @@
           </button>
         </div>
         <div class="detail-header__main">
-          <div class="detail-header__eyebrow">基金详情</div>
-          <h5>{{ fund.name }}</h5>
-          <div class="detail-header__code">{{ fund.fundcode }}</div>
+          <div class="detail-header__meta-row">
+            <div class="detail-header__eyebrow">基金详情</div>
+            <div class="detail-header__code">{{ fund.fundcode }}</div>
+          </div>
+          <div class="detail-header__title-row">
+            <h5>{{ fund.name }}</h5>
+            <span class="detail-header__trust-pill" :class="detailHeaderTrustClass">{{ detailEstimateTag }}</span>
+          </div>
         </div>
         <div class="detail-header__stats">
-          <div class="detail-stat">
-            <div class="detail-stat__label">当日估值</div>
+          <div class="detail-stat detail-stat--compact">
+            <div class="detail-stat__label-row">
+              <div class="detail-stat__label">当日估值</div>
+              <span class="detail-stat__tag" :class="detailEstimateTagClass">{{ detailEstimateTag }}</span>
+            </div>
             <div class="detail-stat__value">{{ detailEstimateValue }}</div>
           </div>
-          <div class="detail-stat" :class="detailChangeClass">
+          <div class="detail-stat detail-stat--compact" :class="detailChangeClass">
             <div class="detail-stat__label">今日涨跌</div>
             <div class="detail-stat__value">{{ detailChangeValue }}</div>
           </div>
-          <div class="detail-stat">
+          <div class="detail-stat detail-stat--compact">
             <div class="detail-stat__label">更新时间</div>
             <div class="detail-stat__value">{{ detailUpdateValue }}</div>
           </div>
@@ -375,6 +383,27 @@ export default {
       }
       return "--";
     },
+    hasRealtimeEstimate() {
+      return !!(
+        this.fund &&
+        !this.fund.hasReplace &&
+        this.fund.gztime &&
+        this.fund.gsz !== undefined &&
+        this.fund.gsz !== null &&
+        this.fund.gsz !== ""
+      );
+    },
+    detailEstimateTag() {
+      return this.hasRealtimeEstimate ? "盘中估值" : "正式净值";
+    },
+    detailEstimateTagClass() {
+      return this.hasRealtimeEstimate ? "detail-stat__tag--estimate" : "detail-stat__tag--nav";
+    },
+    detailHeaderTrustClass() {
+      return this.hasRealtimeEstimate
+        ? "detail-header__trust-pill--estimate"
+        : "detail-header__trust-pill--nav";
+    },
     detailChangeValue() {
       if (this.fund && this.fund.gszzl !== undefined && this.fund.gszzl !== null && this.fund.gszzl !== "") {
         return `${this.fund.gszzl}%`;
@@ -643,7 +672,7 @@ export default {
   flex-wrap: wrap;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   padding: 18px 20px 12px;
 }
 
@@ -651,6 +680,10 @@ export default {
   width: 100%;
   display: flex;
   justify-content: flex-start;
+}
+
+.detail-header__body {
+  display: contents;
 }
 
 .detail-header__back {
@@ -684,6 +717,19 @@ export default {
   text-align: left;
 }
 
+.detail-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.detail-header__meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
 .detail-header__eyebrow {
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -702,11 +748,56 @@ export default {
   color: #64748b;
 }
 
+.detail-header__trust-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.detail-header__trust-pill--estimate {
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.14);
+}
+
+.detail-header__trust-pill--nav {
+  color: #475569;
+  background: rgba(148, 163, 184, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
+}
+
 .detail-header__stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(96px, 1fr));
-  gap: 8px;
-  min-width: 320px;
+  grid-template-columns: repeat(3, minmax(90px, 1fr));
+  gap: 5px;
+  min-width: 300px;
+  width: 100%;
+}
+
+.detail-stat--compact {
+  padding: 5px 9px;
+  border-radius: 10px;
+}
+
+.detail-stat--compact .detail-stat__value {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.detail-stat--compact .detail-stat__label {
+  font-size: 9px;
+}
+
+.detail-stat--compact .detail-stat__tag {
+  padding: 0 5px;
+  font-size: 9px;
 }
 
 .detail-stat {
@@ -722,6 +813,37 @@ export default {
 .detail-stat__label {
   font-size: 11px;
   color: #64748b;
+}
+
+.detail-stat__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.detail-stat__tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  line-height: 1.4;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.detail-stat__tag--estimate {
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.14);
+}
+
+.detail-stat__tag--nav {
+  color: #475569;
+  background: rgba(148, 163, 184, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.16);
 }
 
 .detail-stat__value {
@@ -753,6 +875,12 @@ export default {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.82),
     0 8px 18px rgba(78, 182, 27, 0.08);
+}
+
+@media (max-width: 680px) {
+  .detail-header__stats {
+    grid-template-columns: 1fr;
+  }
 }
 
 .manual-tabs {
@@ -1070,6 +1198,30 @@ export default {
     background: linear-gradient(180deg, rgba(24, 76, 31, 0.3), rgba(255, 255, 255, 0.04));
     border-color: rgba(78, 182, 27, 0.24);
     box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+  }
+
+  .detail-stat__tag--estimate {
+    color: #bfdbfe;
+    background: rgba(96, 165, 250, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.22);
+  }
+
+  .detail-stat__tag--nav {
+    color: rgba($color: #ffffff, $alpha: 0.84);
+    background: rgba(148, 163, 184, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+  }
+
+  .detail-header__trust-pill--estimate {
+    color: #bfdbfe;
+    background: rgba(96, 165, 250, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.22);
+  }
+
+  .detail-header__trust-pill--nav {
+    color: rgba($color: #ffffff, $alpha: 0.84);
+    background: rgba(148, 163, 184, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
   }
 
   .btn,

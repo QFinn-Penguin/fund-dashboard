@@ -1,6 +1,7 @@
 <template>
   <div
     class="box"
+    :class="{ darkMode }"
     v-loading="loading"
     :element-loading-background="
       darkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)'
@@ -37,9 +38,23 @@
 
         <section class="detail-card">
           <div class="detail-card__header">
-            <div>
+            <div class="detail-card__heading">
               <div class="detail-card__eyebrow">基准对比卡</div>
-              <h6 class="detail-card__title">{{ benchmarkInfo.name }}</h6>
+              <h6 class="detail-card__title detail-card__title--benchmark">
+                <template v-for="(token, index) in benchmarkTitleTokens">
+                  <wbr v-if="token.type === 'break'" :key="`benchmark-title-break-${index}`" />
+                  <span
+                    v-else
+                    :key="`benchmark-title-token-${index}`"
+                    :class="[
+                      'benchmark-title__token',
+                      token.type === 'weight' && 'benchmark-title__token--weight',
+                    ]"
+                  >
+                    {{ token.text }}
+                  </span>
+                </template>
+              </h6>
             </div>
             <span class="pill" :class="benchmarkInfo.type === 'reference' ? 'pill--reference' : 'pill--neutral'">
               {{ benchmarkInfo.typeLabel }}
@@ -197,6 +212,43 @@ export default {
   },
   mounted() {
     this.init();
+  },
+  computed: {
+    benchmarkTitleTokens() {
+      const name = this.benchmarkInfo && this.benchmarkInfo.name ? String(this.benchmarkInfo.name).trim() : "";
+
+      if (!name) {
+        return [];
+      }
+
+      return name
+        .split(/(?=[+＋])/)
+        .filter(Boolean)
+        .reduce((tokens, segment, segmentIndex) => {
+          const weightMatch = segment.match(/([*＊×xX]\s*\d+(?:\.\d+)?%)$/);
+          const mainText = weightMatch ? segment.slice(0, -weightMatch[1].length) : segment;
+          const weightText = weightMatch ? weightMatch[1] : "";
+          const displayText =
+            segmentIndex > 0 && /^[+＋]/.test(mainText)
+              ? mainText.replace(/^([+＋])/, "$1\u202F")
+              : mainText;
+
+          if (segmentIndex > 0) {
+            tokens.push({ type: "break" });
+          }
+
+          if (displayText) {
+            tokens.push({ type: "text", text: displayText });
+          }
+
+          if (weightText) {
+            tokens.push({ type: "break" });
+            tokens.push({ type: "weight", text: weightText });
+          }
+
+          return tokens;
+        }, []);
+    },
   },
   methods: {
     init() {
@@ -372,6 +424,11 @@ export default {
   gap: 12px;
 }
 
+.detail-card__heading {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
 .detail-card__eyebrow {
   font-size: 11px;
   letter-spacing: 0.06em;
@@ -384,6 +441,16 @@ export default {
   font-size: 16px;
   line-height: 1.5;
   color: #0f172a;
+}
+
+.detail-card__title--benchmark {
+  line-height: 1.6;
+  text-wrap: balance;
+  line-break: strict;
+}
+
+.benchmark-title__token--weight {
+  white-space: nowrap;
 }
 
 .detail-card__note {
@@ -539,54 +606,76 @@ export default {
   }
 }
 
-:deep(.darkMode) .content-box::before {
-  background: linear-gradient(90deg, rgba(96, 165, 250, 0.52), rgba(96, 165, 250, 0.1), transparent);
-}
+.darkMode {
+  .content-box::before {
+    background: linear-gradient(90deg, rgba(96, 165, 250, 0.52), rgba(96, 165, 250, 0.1), transparent);
+  }
 
-:deep(.darkMode) .detail-card {
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.74));
-  border-color: rgba(148, 163, 184, 0.18);
-  box-shadow: 0 14px 26px rgba(2, 6, 23, 0.22);
-}
+  .detail-card {
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.74));
+    border-color: rgba(148, 163, 184, 0.18);
+    box-shadow: 0 14px 26px rgba(2, 6, 23, 0.22);
+  }
 
-:deep(.darkMode) .detail-card__eyebrow,
-:deep(.darkMode) .detail-card__foot,
-:deep(.darkMode) .benchmark-table__head,
-:deep(.darkMode) .info-row span:first-child,
-:deep(.darkMode) .metric-item__label,
-:deep(.darkMode) .metric-item__meta {
-  color: rgba(226, 232, 240, 0.66);
-}
+  .detail-card__eyebrow,
+  .detail-card__foot,
+  .benchmark-table__head,
+  .info-row span:first-child,
+  .metric-item__label,
+  .metric-item__meta {
+    color: rgba(226, 232, 240, 0.66);
+  }
 
-:deep(.darkMode) .detail-card__title,
-:deep(.darkMode) .info-row span:last-child,
-:deep(.darkMode) .detail-card__empty {
-  color: rgba(248, 250, 252, 0.94);
-}
+  .detail-card__title,
+  .info-row span:last-child,
+  .detail-card__empty {
+    color: rgba(248, 250, 252, 0.94);
+  }
 
-:deep(.darkMode) .detail-card__note,
-:deep(.darkMode) .metric-item,
-:deep(.darkMode) .benchmark-table__row,
-:deep(.darkMode) .detail-card__empty,
-:deep(.darkMode) .info-list,
-:deep(.darkMode) .info-row {
-  background: rgba(255, 255, 255, 0.035);
-  border-color: rgba(148, 163, 184, 0.14);
-}
+  .detail-card__note {
+    color: rgba(241, 245, 249, 0.88);
+  }
 
-:deep(.darkMode) .metric-item__value {
-  color: #bfdbfe;
-}
+  .detail-card__note,
+  .metric-item,
+  .benchmark-table__row,
+  .detail-card__empty,
+  .info-list,
+  .info-row {
+    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(148, 163, 184, 0.14);
+  }
 
-:deep(.darkMode) .benchmark-table__row:not(.benchmark-table__head) span:nth-child(2) {
-  color: #bfdbfe;
-}
+  .metric-item__value {
+    color: #bfdbfe;
+  }
 
-:deep(.darkMode) .benchmark-table__row:not(.benchmark-table__head) span:nth-child(3) {
-  color: #99f6e4;
-}
+  .benchmark-table__row:not(.benchmark-table__head) span:nth-child(2) {
+    color: #bfdbfe;
+  }
 
-:deep(.darkMode) .benchmark-table__row:not(.benchmark-table__head) span:nth-child(4) {
-  color: #ddd6fe;
+  .benchmark-table__row:not(.benchmark-table__head) span:nth-child(3) {
+    color: #99f6e4;
+  }
+
+  .benchmark-table__row:not(.benchmark-table__head) span:nth-child(4) {
+    color: #ddd6fe;
+  }
+
+  .detail-card:nth-child(2) .benchmark-table__row span:first-child {
+    color: rgba(226, 232, 240, 0.82);
+  }
+
+  .detail-card:nth-child(3) .info-row span:last-child,
+  .detail-card:nth-child(4) .info-row span:last-child {
+    color: rgba(248, 250, 252, 0.96);
+  }
+
+  .detail-card:nth-child(2) .pill--reference,
+  .detail-card:nth-child(2) .pill--neutral {
+    color: #dbeafe;
+    background: rgba(59, 130, 246, 0.14);
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.22);
+  }
 }
 </style>

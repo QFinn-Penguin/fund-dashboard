@@ -9,7 +9,18 @@
   >
     <div class="main-echarts" ref="mainCharts"></div>
     <div v-if="emptyText" class="empty-text">{{ emptyText }}</div>
+    <div v-if="chartTrustNote" class="chart-trust-note">{{ chartTrustNote }}</div>
+    <div v-if="modeHint" class="mode-hint">{{ modeHint }}</div>
     <div class="chart-toolbar">
+      <el-radio-group
+        v-if="chartType === 'JZ'"
+        v-model="jzViewMode"
+        class="chart-mode-group"
+        @change="changeJzViewMode"
+      >
+        <el-radio-button label="nav">净值走势</el-radio-button>
+        <el-radio-button label="benchmark">基金 vs 基准</el-radio-button>
+      </el-radio-group>
       <el-radio-group
         v-model="sltTimeRange"
         class="chart-range-group"
@@ -32,8 +43,10 @@ let echarts = require("echarts/lib/echarts");
 import "./js/customed.js";
 import "./js/dark.js";
 import {
+  buildBenchmarkOverlaySeries,
   fetchFundNetDiagram,
   fetchFundYieldDiagram,
+  normalizeNetHistory,
 } from "./fundDetailEnhance";
 require("echarts/lib/chart/line");
 
@@ -77,6 +90,10 @@ export default {
       loading: false,
       emptyText: "",
       requestVersion: 0,
+      jzViewMode: "nav",
+      chartTrustNote: "",
+      modeHint: "",
+      benchmarkFallbackRanges: ["y", "3y", "6y", "n", "3n", "5n"],
     };
   },
 
@@ -377,6 +394,60 @@ export default {
       };
       this.myChart.setOption(this.option);
     },
+    renderBenchmarkNetChart(netHistoryList = [], yieldResponse = null) {
+      const normalizedNetHistory = normalizeNetHistory(netHistoryList);
+      const benchmarkName =
+        (yieldResponse && yieldResponse.expansion && yieldResponse.expansion.INDEXNAME
+          ? `${yieldResponse.expansion.INDEXNAME}（参考基准）`
+          : "参考基准");
+      const benchmarkOverlay = buildBenchmarkOverlaySeries(
+        netHistoryList,
+        (yieldResponse && yieldResponse.dataList) || [],
+        benchmarkName
+      );
+
+      if (!benchmarkOverlay.hasBenchmark) {
+        return false;
+      }
+
+      this.option.legend = this.getBaseLegend(true);
+      this.option.xAxis.data = benchmarkOverlay.xAxis;
+      this.option.series = [
+        this.buildLineSeries({
+          name: "基金净值",
+          data: benchmarkOverlay.fundSeries,
+          color: this.palette.primary,
+          areaStart: this.palette.primaryAreaStart,
+          areaEnd: this.palette.primaryAreaEnd,
+          latestLabelFormatter: ({ value }) => `当前 ${Number(value).toFixed(3)}`,
+        }),
+        this.buildLineSeries({
+          name: benchmarkOverlay.benchmarkLabel,
+          data: benchmarkOverlay.benchmarkSeries,
+          color: this.palette.secondary,
+          areaStart: this.palette.secondaryAreaStart,
+          areaEnd: this.palette.secondaryAreaEnd,
+          showArea: false,
+        }),
+      ];
+      this.option.series[1].tooltip.show = false;
+      this.option.tooltip.formatter = (p) => {
+        const fundPoint = p.find((item) => item.seriesName === "基金净值") || p[0];
+        const benchmarkPoint = p.find((item) => item.seriesName === benchmarkOverlay.benchmarkLabel);
+        const current = normalizedNetHistory.find((item) => item.date === fundPoint.name) || {};
+        const benchmarkText = benchmarkPoint
+          ? `<br />${benchmarkPoint.seriesName}：${Number(benchmarkPoint.value).toFixed(3)}`
+          : "";
+        const growthText = current.dayChangeRate !== null && current.dayChangeRate !== undefined
+          ? `${current.dayChangeRate.toFixed(2)}%`
+          : "--";
+        return `时间：${fundPoint.name}<br />${fundPoint.seriesName}：${Number(fundPoint.value).toFixed(
+          3
+        )}${benchmarkText}<br />日增长率：${growthText}`;
+      };
+      this.myChart.setOption(this.option);
+      return true;
+    },
     renderFallbackYieldChart(dataList = []) {
       const fallbackSeries = this.buildFallbackYieldSeries(dataList);
       if (!fallbackSeries.length) {
@@ -403,6 +474,56 @@ export default {
     },
     fetchNetDiagramData() {
       return fetchFundNetDiagram(this.fund.fundcode, this.sltTimeRange);
+    },
+    getRangeLabel(range) {
+      const rangeLabelMap = {
+        y: "近1月",
+        "3y": "近3月",
+        "6y": "近6月",
+        n: "近1年",
+        "3n": "近3年",
+        "5n": "近5年",
+      };
+      return rangeLabelMap[range] || range;
+    },
+    async resolveBenchmarkNetView(fundCode, preferredRange) {
+      const candidateRanges = [preferredRange].concat(
+        this.benchmarkFallbackRanges.filter((range) => range !== preferredRange)
+      );
+
+      for (let index = 0; index < candidateRanges.length; index += 1) {
+        const range = candidateRanges[index];
+        const [netHistoryList, yieldResponse] = await Promise.all([
+          fetchFundNetDiagram(fundCode, range),
+          fetchFundYieldDiagram(fundCode, range).catch(() => ({ dataList: [], expansion: {} })),
+        ]);
+        const benchmarkName =
+          (yieldResponse && yieldResponse.expansion && yieldResponse.expansion.INDEXNAME
+            ? `${yieldResponse.expansion.INDEXNAME}（参考基准）`
+            : "参考基准");
+        const benchmarkOverlay = buildBenchmarkOverlaySeries(
+          netHistoryList,
+          (yieldResponse && yieldResponse.dataList) || [],
+          benchmarkName
+        );
+
+        if (benchmarkOverlay.hasBenchmark) {
+          return {
+            found: true,
+            range,
+            netHistoryList,
+            yieldResponse,
+          };
+        }
+      }
+
+      const fallbackNetHistoryList = await fetchFundNetDiagram(fundCode, preferredRange);
+      return {
+        found: false,
+        range: preferredRange,
+        netHistoryList: fallbackNetHistoryList,
+        yieldResponse: { dataList: [], expansion: {} },
+      };
     },
     init() {
       if (this.myChart && typeof this.myChart.dispose === "function") {
@@ -499,6 +620,11 @@ export default {
     changeTimeRange(val) {
       this.getData();
     },
+    changeJzViewMode() {
+      if (this.chartType === "JZ") {
+        this.getData();
+      }
+    },
     handle_num_range(data) {
       var _aa = Math.max.apply(null, data);
       var _bb = Math.min.apply(null, data);
@@ -510,6 +636,8 @@ export default {
       const timeRange = this.sltTimeRange;
       this.loading = true;
       this.emptyText = "";
+      this.chartTrustNote = "";
+      this.modeHint = "";
       if (this.chartType == "LJSY") {
         fetchFundYieldDiagram(fundCode, timeRange)
           .then((yieldResponse) => {
@@ -520,6 +648,7 @@ export default {
               ? yieldResponse.dataList
               : [];
             if (dataList.length) {
+              this.chartTrustNote = "以下收益对比基于参考基准，仅供辅助判断";
               this.renderYieldChart(
                 dataList,
                 yieldResponse && yieldResponse.expansion && yieldResponse.expansion.INDEXNAME
@@ -564,9 +693,31 @@ export default {
             }
           });
       } else {
-        this.fetchNetDiagramData()
-          .then((dataList) => {
+        const viewTask = this.jzViewMode === "benchmark"
+          ? this.resolveBenchmarkNetView(fundCode, timeRange)
+          : Promise.resolve({ found: false, range: timeRange, netHistoryList: null, yieldResponse: null });
+
+        Promise.all([
+          this.fetchNetDiagramData(),
+          viewTask,
+        ])
+          .then(([dataList, benchmarkView]) => {
             if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode || timeRange !== this.sltTimeRange) {
+              return;
+            }
+            if (this.jzViewMode === "benchmark") {
+              const rendered = benchmarkView && benchmarkView.found
+                ? this.renderBenchmarkNetChart(benchmarkView.netHistoryList, benchmarkView.yieldResponse)
+                : false;
+              if (!rendered) {
+                this.modeHint = "当前所有可探测区间暂无可用基准数据，已回退为净值走势";
+                this.renderNetValueChart(dataList);
+              } else {
+                this.chartTrustNote = "以下对比仅供辅助判断";
+                this.modeHint = benchmarkView.range === timeRange
+                  ? "当前展示为基金净值 vs 参考基准"
+                  : `当前区间无可用基准数据，已自动切换到${this.getRangeLabel(benchmarkView.range)}展示基金净值 vs 参考基准`;
+              }
               return;
             }
             this.renderNetValueChart(dataList);
@@ -613,10 +764,58 @@ export default {
   text-align: center;
 }
 
+.chart-trust-note {
+  margin: 2px 0 6px;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+  color: #64748b;
+}
+
+.mode-hint {
+  margin: 2px 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  color: #64748b;
+}
+
 .chart-toolbar {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   padding-top: 4px;
+}
+
+.chart-mode-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.chart-mode-group:deep(.el-radio-button__inner) {
+  min-width: 88px;
+  padding: 6px 12px;
+  border-color: rgba(148, 163, 184, 0.22);
+  background: rgba(255, 255, 255, 0.72);
+  color: #475569;
+  box-shadow: none;
+}
+
+.chart-mode-group:deep(.el-radio-button:first-child .el-radio-button__inner) {
+  border-radius: 10px 0 0 10px;
+}
+
+.chart-mode-group:deep(.el-radio-button:last-child .el-radio-button__inner) {
+  border-radius: 0 10px 10px 0;
+}
+
+.chart-mode-group:deep(.el-radio-button__orig-radio:checked + .el-radio-button__inner) {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.4);
+  color: #1d4ed8;
+  box-shadow: none;
 }
 
 .chart-range-group {
@@ -663,10 +862,26 @@ export default {
   color: rgba(191, 219, 254, 0.66);
 }
 
+.box--dark .chart-trust-note {
+  color: rgba(191, 219, 254, 0.68);
+}
+
+.box--dark .mode-hint {
+  color: rgba(191, 219, 254, 0.72);
+}
+
+:global(.darkMode) .chart-mode-group .el-radio-button__inner,
 :global(.darkMode) .chart-range-group .el-radio-button__inner {
   border-color: rgba(96, 165, 250, 0.16);
   background: rgba(15, 23, 42, 0.72);
   color: rgba(226, 232, 240, 0.78);
+}
+
+:global(.darkMode) .chart-mode-group .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  background: rgba(96, 165, 250, 0.16);
+  border-color: rgba(96, 165, 250, 0.34);
+  color: #bfdbfe;
+  box-shadow: none;
 }
 
 :global(.darkMode) .chart-range-group .el-radio-button__orig-radio:checked + .el-radio-button__inner {

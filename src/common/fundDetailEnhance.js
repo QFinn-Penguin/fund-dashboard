@@ -649,14 +649,12 @@ export function buildBenchmarkOverlaySeries(historyList = [], yieldList = [], fa
   const xAxis = [];
   const fundSeries = [];
   const benchmarkSeries = [];
-  let lastFundPoint = null;
 
   yieldPoints.forEach((item) => {
-    const matchedFundPoint = fundByDate[item.date] || lastFundPoint;
+    const matchedFundPoint = fundByDate[item.date];
     if (!matchedFundPoint || item.benchmarkYield === null) {
       return;
     }
-    lastFundPoint = matchedFundPoint;
     xAxis.push(item.date);
     fundSeries.push(matchedFundPoint.nav);
     benchmarkSeries.push(+((1 + item.benchmarkYield / 100) * baselineNav).toFixed(4));

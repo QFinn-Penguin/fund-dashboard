@@ -9,6 +9,7 @@
       ref="mainCharts"
     ></div>
     <div v-if="emptyText" class="empty-text">{{ emptyText }}</div>
+    <div v-if="chartTrustNote" class="chart-trust-note">{{ chartTrustNote }}</div>
   </div>
 </template>
 
@@ -50,6 +51,7 @@ export default {
       DWJZ: 0,
       loading: false,
       emptyText: "",
+      chartTrustNote: "盘中估值为实时估算值，最终以正式净值为准",
       timeData: [
         "09:30",
         "09:31",
@@ -816,6 +818,14 @@ export default {
   color: #909399;
 }
 
+.chart-trust-note {
+  margin-top: 4px;
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #64748b;
+}
+
 .chart-wrap:deep(.echarts) {
   border-radius: 12px;
 }
@@ -828,5 +838,9 @@ export default {
 
 .chart-wrap--dark .empty-text {
   color: rgba(191, 219, 254, 0.66);
+}
+
+.chart-wrap--dark .chart-trust-note {
+  color: rgba(191, 219, 254, 0.68);
 }
 </style>
