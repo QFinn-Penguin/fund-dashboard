@@ -31,8 +31,10 @@ let echarts = require("echarts/lib/echarts");
 
 import "./js/customed.js";
 import "./js/dark.js";
-import { requestWithBackground } from "./request";
-
+import {
+  fetchFundNetDiagram,
+  fetchFundYieldDiagram,
+} from "./fundDetailEnhance";
 require("echarts/lib/chart/line");
 
 require("echarts/lib/component/tooltip");
@@ -74,6 +76,7 @@ export default {
       option: {},
       loading: false,
       emptyText: "",
+      requestVersion: 0,
     };
   },
 
@@ -300,7 +303,7 @@ export default {
     renderYieldChart(dataList = [], indexName = "指数") {
       this.option.legend = this.getBaseLegend(true);
       this.option.tooltip.formatter = (p) => {
-        const mainPoint = p.find((item) => item.seriesName === "涨幅") || p[0];
+        const mainPoint = p.find((item) => item.seriesName === "基金") || p[0];
         const secondaryPoint = p.find((item) => item.seriesName === indexName);
         const secondaryText = secondaryPoint
           ? `<br />${secondaryPoint.seriesName}：${Number(secondaryPoint.value).toFixed(2)}%`
@@ -312,7 +315,7 @@ export default {
       this.option.xAxis.data = dataList.map((item) => item.PDATE);
       this.option.series = [
         this.buildLineSeries({
-          name: "涨幅",
+          name: "基金",
           data: dataList.map((item) => +item.YIELD),
           color: this.palette.primary,
           areaStart: this.palette.primaryAreaStart,
@@ -329,6 +332,49 @@ export default {
         }),
       ];
       this.option.series[1].tooltip.show = false;
+      this.myChart.setOption(this.option);
+    },
+    renderNetValueChart(dataList = []) {
+      if (!dataList.length) {
+        this.resetChartWithEmptyState("暂无历史净值数据");
+        return;
+      }
+
+      this.option.legend = this.getBaseLegend(true);
+      this.option.xAxis.data = dataList.map((item) => item.FSRQ);
+      this.option.series = [
+        this.buildLineSeries({
+          name: "单位净值",
+          data: dataList.map((item) => +item.DWJZ),
+          color: this.palette.primary,
+          areaStart: this.palette.primaryAreaStart,
+          areaEnd: this.palette.primaryAreaEnd,
+          latestLabelFormatter: ({ value }) => `当前 ${Number(value).toFixed(3)}`,
+        }),
+        this.buildLineSeries({
+          name: "累计净值",
+          data: dataList.map((item) => +item.LJJZ),
+          color: this.palette.secondary,
+          areaStart: this.palette.secondaryAreaStart,
+          areaEnd: this.palette.secondaryAreaEnd,
+          showArea: false,
+        }),
+      ];
+      this.option.series[1].tooltip.show = false;
+      this.option.tooltip.formatter = (p) => {
+        const mainPoint = p.find((item) => item.seriesName === "单位净值") || p[0];
+        const secondaryPoint = p.find((item) => item.seriesName === "累计净值");
+        const secondaryText = secondaryPoint
+          ? `<br />${secondaryPoint.seriesName}：${Number(secondaryPoint.value).toFixed(3)}`
+          : "";
+        const current = dataList[p[0].dataIndex] || {};
+        const growthText = current.JZZZL !== undefined && current.JZZZL !== null && current.JZZZL !== ""
+          ? `${current.JZZZL}%`
+          : "--";
+        return `时间：${mainPoint.name}<br />${mainPoint.seriesName}：${Number(mainPoint.value).toFixed(
+          3
+        )}${secondaryText}<br />日增长率：${growthText}`;
+      };
       this.myChart.setOption(this.option);
     },
     renderFallbackYieldChart(dataList = []) {
@@ -356,18 +402,7 @@ export default {
       this.myChart.setOption(this.option);
     },
     fetchNetDiagramData() {
-      let url = `https://fundmobapi.eastmoney.com/FundMApi/FundNetDiagram.ashx?FCODE=${
-        this.fund.fundcode
-      }&RANGE=${
-        this.sltTimeRange
-      }&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&_=${new Date().getTime()}`;
-
-      return requestWithBackground({
-        method: "get",
-        url,
-      }).then((res) => {
-        return Array.isArray(res.data && res.data.Datas) ? res.data.Datas : [];
-      });
+      return fetchFundNetDiagram(this.fund.fundcode, this.sltTimeRange);
     },
     init() {
       if (this.myChart && typeof this.myChart.dispose === "function") {
@@ -470,29 +505,32 @@ export default {
       return [_aa, _bb];
     },
     getData() {
+      const requestId = ++this.requestVersion;
+      const fundCode = this.fund.fundcode;
+      const timeRange = this.sltTimeRange;
       this.loading = true;
       this.emptyText = "";
       if (this.chartType == "LJSY") {
-        let url = `https://fundmobapi.eastmoney.com/FundMApi/FundYieldDiagramNew.ashx?FCODE=${
-          this.fund.fundcode
-        }&RANGE=${
-          this.sltTimeRange
-        }&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&_=${new Date().getTime()}`;
-        requestWithBackground({
-          method: "get",
-          url,
-        })
-          .then((res) => {
-            let dataList = Array.isArray(res.data && res.data.Datas)
-              ? res.data.Datas
+        fetchFundYieldDiagram(fundCode, timeRange)
+          .then((yieldResponse) => {
+            if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode || timeRange !== this.sltTimeRange) {
+              return;
+            }
+            let dataList = Array.isArray(yieldResponse && yieldResponse.dataList)
+              ? yieldResponse.dataList
               : [];
             if (dataList.length) {
               this.renderYieldChart(
                 dataList,
-                res.data.Expansion ? res.data.Expansion.INDEXNAME : "指数"
+                yieldResponse && yieldResponse.expansion && yieldResponse.expansion.INDEXNAME
+                  ? `${yieldResponse.expansion.INDEXNAME}（参考基准）`
+                  : "参考基准"
               );
             } else {
               return this.fetchNetDiagramData().then((fallbackDataList) => {
+                if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode || timeRange !== this.sltTimeRange) {
+                  return;
+                }
                 if (fallbackDataList.length) {
                   this.renderFallbackYieldChart(fallbackDataList);
                 } else {
@@ -504,6 +542,9 @@ export default {
           .catch(() => {
             return this.fetchNetDiagramData()
               .then((fallbackDataList) => {
+                if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode || timeRange !== this.sltTimeRange) {
+                  return;
+                }
                 if (fallbackDataList.length) {
                   this.renderFallbackYieldChart(fallbackDataList);
                 } else {
@@ -511,55 +552,35 @@ export default {
                 }
               })
               .catch(() => {
+                if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode || timeRange !== this.sltTimeRange) {
+                  return;
+                }
                 this.resetChartWithEmptyState("累计收益加载失败");
               });
           })
           .finally(() => {
-            this.loading = false;
+            if (requestId === this.requestVersion) {
+              this.loading = false;
+            }
           });
       } else {
         this.fetchNetDiagramData()
           .then((dataList) => {
-            this.option.legend = this.getBaseLegend(true);
-            this.option.xAxis.data = dataList.map((item) => item.FSRQ);
-            this.option.series = [
-              this.buildLineSeries({
-                name: "单位净值",
-                data: dataList.map((item) => +item.DWJZ),
-                color: this.palette.primary,
-                areaStart: this.palette.primaryAreaStart,
-                areaEnd: this.palette.primaryAreaEnd,
-                latestLabelFormatter: ({ value }) =>
-                  `当前 ${Number(value).toFixed(3)}`,
-              }),
-              this.buildLineSeries({
-                name: "累计净值",
-                data: dataList.map((item) => +item.LJJZ),
-                color: this.palette.secondary,
-                areaStart: this.palette.secondaryAreaStart,
-                areaEnd: this.palette.secondaryAreaEnd,
-                showArea: false,
-              }),
-            ];
-            this.option.series[1].tooltip.show = false;
-            this.option.tooltip.formatter = (p) => {
-              const mainPoint = p.find((item) => item.seriesName === "单位净值") || p[0];
-              const secondaryPoint = p.find((item) => item.seriesName === "累计净值");
-              const str = secondaryPoint
-                ? `<br />${secondaryPoint.seriesName}：${Number(secondaryPoint.value).toFixed(3)}`
-                : "";
-              const current = dataList[p[0].dataIndex] || {};
-              return `时间：${mainPoint.name}<br />${mainPoint.seriesName}：${
-                Number(mainPoint.value).toFixed(3)
-              }${str}<br />日增长率：${current.JZZZL || 0}%`;
-            };
-            this.myChart.setOption(this.option);
+            if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode || timeRange !== this.sltTimeRange) {
+              return;
+            }
+            this.renderNetValueChart(dataList);
           })
           .catch(() => {
-            this.resetChartWithEmptyState("");
+            if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode || timeRange !== this.sltTimeRange) {
+              return;
+            }
+            this.resetChartWithEmptyState("历史净值加载失败");
           })
           .finally(() => {
-            this.loading = false;
+            if (requestId === this.requestVersion) {
+              this.loading = false;
+            }
           });
       }
     },

@@ -46,7 +46,7 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://fundmobapi.eastmoney.com https://fundsuggest.eastmoney.com https://push2.eastmoney.com https://fundgz.1234567.com.cn"
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src 'self' https://fundmobapi.eastmoney.com https://fundsuggest.eastmoney.com https://push2.eastmoney.com https://fundgz.1234567.com.cn https://fundf10.eastmoney.com"
   },
   "permissions": [
     "storage",
@@ -58,6 +58,7 @@
     "https://fundmobapi.eastmoney.com/*",
     "https://fundsuggest.eastmoney.com/*",
     "https://push2.eastmoney.com/*",
-    "https://fundgz.1234567.com.cn/*"
+    "https://fundgz.1234567.com.cn/*",
+    "https://fundf10.eastmoney.com/*"
   ]
 }

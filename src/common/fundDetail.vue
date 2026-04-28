@@ -266,6 +266,16 @@
           ref="info"
           @showManager="showManager"
         ></component>
+
+        <component
+          :is="fundInsightComponent"
+          v-else-if="activeName === 'insight' && fundInsightComponent"
+          :key="`insight-${fund.fundcode}`"
+          :darkMode="darkMode"
+          :fund="fund"
+          :holdingsExpansion="holdingsExpansion"
+          ref="insight"
+        ></component>
       </div>
 
     </div>
@@ -290,6 +300,7 @@ const loadCharts = () => import(/* webpackChunkName: "popup-fund-detail-charts" 
 const loadCharts2 = () => import(/* webpackChunkName: "popup-fund-detail-charts2" */ "./charts2");
 const loadMiniIndDetail = () => import(/* webpackChunkName: "popup-fund-detail-ind-detail" */ "../common/indDetail");
 const loadFundInfo = () => import(/* webpackChunkName: "popup-fund-detail-info" */ "../common/fundInfo");
+const loadFundInsight = () => import(/* webpackChunkName: "popup-fund-detail-insight" */ "../common/fundInsight");
 const loadManagerDetail = () => import(/* webpackChunkName: "popup-fund-detail-manager" */ "../common/managerDetail");
 
 export default {
@@ -339,6 +350,7 @@ export default {
       chartsComponent: null,
       charts2Component: null,
       fundInfoComponent: null,
+      fundInsightComponent: null,
       miniIndDetailComponent: null,
       miniIndDetailVisible: false,
       managerDetailComponent: null,
@@ -349,6 +361,7 @@ export default {
         { name: "second", label: "历史净值" },
         { name: "third", label: "累计收益" },
         { name: "info", label: "基金概况" },
+        { name: "insight", label: "深度信息" },
       ],
     };
   },
@@ -439,6 +452,11 @@ export default {
       if (name === "info" && !this.fundInfoComponent) {
         const fundInfoModule = await loadFundInfo();
         this.fundInfoComponent = fundInfoModule.default || fundInfoModule;
+      }
+
+      if (name === "insight" && !this.fundInsightComponent) {
+        const fundInsightModule = await loadFundInsight();
+        this.fundInsightComponent = fundInsightModule.default || fundInsightModule;
       }
     },
     async ensureMiniIndDetailComponent() {

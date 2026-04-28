@@ -33,6 +33,7 @@
           </p>
         </div>
       </div>
+
       <div class="info-list">
         <div class="info-row"><span>单位净值</span><span>{{ infoData.DWJZ }}（{{ infoData.FSRQ }}）</span></div>
         <div class="info-row"><span>累计净值</span><span>{{ infoData.LJJZ }}</span></div>
@@ -44,6 +45,7 @@
         <div class="info-row"><span>交易状态</span><span>{{ infoData.SGZT }} {{ infoData.SHZT }}</span></div>
         <div class="info-row"><span>基金规模</span><span>{{ numberFormat(infoData.ENDNAV) }}</span></div>
       </div>
+
       <div v-if="infoData.FUNDBONUS" class="bonus-row">
         分红状态：{{ infoData.FUNDBONUS.PDATE }}日，每份基金份额折算{{
           infoData.FUNDBONUS.CHGRATIO
@@ -54,17 +56,13 @@
       <div class="empty-state__title">基金概况暂时不可用</div>
       <div class="empty-state__desc">当前未获取到该基金的概况信息，请稍后重试。</div>
     </div>
-    
   </div>
 </template>
 
 <script>
-// import indDetail from "../common/indDetail";
-import { requestWithBackground } from "./request";
+import { fetchFundBaseInfo } from "./fundDetailEnhance";
+
 export default {
-  components: {
-    // indDetail,
-  },
   name: "fundInfo",
   props: {
     darkMode: {
@@ -80,14 +78,22 @@ export default {
     return {
       infoData: {},
       loading: false,
-      
+      requestVersion: 0,
     };
   },
-
-  watch: {},
   computed: {
     defaultColor() {
       return this.darkMode ? "rgba(255,255,255,0.6)" : "#ccc";
+    },
+  },
+  watch: {
+    "fund.fundcode": {
+      handler(nextCode, prevCode) {
+        if (!nextCode || nextCode === prevCode) {
+          return;
+        }
+        this.getData();
+      },
     },
   },
   mounted() {
@@ -97,27 +103,31 @@ export default {
     init() {
       this.getData();
     },
-
     getData() {
+      const fundCode = this.fund.fundcode;
+      const requestId = ++this.requestVersion;
+      this.infoData = {};
       this.loading = true;
-      let url = `https://fundmobapi.eastmoney.com/FundMApi/FundBaseTypeInformation.ashx?FCODE=${
-        this.fund.fundcode
-      }&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&Uid=&_=${new Date().getTime()}`;
-      requestWithBackground({
-        method: "get",
-        url,
-      })
-        .then((res) => {
-          this.infoData = res.data && res.data.Datas ? res.data.Datas : {};
+      fetchFundBaseInfo(fundCode)
+        .then((baseInfo) => {
+          if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode) {
+            return;
+          }
+
+          this.infoData = baseInfo && baseInfo.FCODE ? baseInfo : {};
         })
         .catch(() => {
+          if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode) {
+            return;
+          }
           this.infoData = {};
         })
         .finally(() => {
-          this.loading = false;
+          if (requestId === this.requestVersion) {
+            this.loading = false;
+          }
         });
     },
-    
     numberFormat(value) {
       var param = {};
       var k = 10000,
@@ -178,7 +188,7 @@ export default {
   text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 
   .hisrank-row {
     display: flex;
@@ -188,7 +198,7 @@ export default {
     & > div {
       text-align: center;
       margin: 0;
-      
+
       p {
         margin: 0;
       }
@@ -196,35 +206,69 @@ export default {
   }
 }
 
+.content-box::before {
+  content: "";
+  display: block;
+  height: 1px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.48), rgba(37, 99, 235, 0.08), transparent);
+}
+
 .stat-card {
   flex: 1;
-  padding: 12px 10px;
-  border-radius: 12px;
-  background: rgba(248, 250, 252, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  position: relative;
+  padding: 16px 14px 14px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 252, 0.96));
+  border: 1px solid rgba(226, 232, 240, 0.96);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.68), rgba(37, 99, 235, 0.18));
 }
 
 .stat-card__label {
-  margin-bottom: 6px;
+  margin-bottom: 10px;
   font-size: 11px;
+  letter-spacing: 0.04em;
   color: #64748b;
+}
+
+.stat-card p {
+  font-size: 15px;
+  line-height: 1.5;
 }
 
 .info-list {
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.96);
+  border-radius: 16px;
   overflow: hidden;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 252, 0.97));
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.05);
+}
+
+.info-list--embedded {
+  border-radius: 12px;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 16px;
-  line-height: 1.5;
-  background: rgba(255, 255, 255, 0.82);
+  align-items: center;
+  padding: 13px 18px;
+  line-height: 1.6;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .info-row + .info-row {
@@ -232,21 +276,40 @@ export default {
 }
 
 .info-row span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: #64748b;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
 .info-row span:last-child {
-  color: #1f2937;
-  font-weight: 600;
+  color: #111827;
+  font-weight: 700;
   text-align: right;
+  font-size: 13px;
+}
+
+.info-row span:first-child::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.82), rgba(37, 99, 235, 0.72));
+  box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.1);
 }
 
 .bonus-row {
-  padding: 10px 16px;
-  border-radius: 12px;
-  background: rgba(248, 250, 252, 0.92);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  line-height: 1.5;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 251, 235, 0.98), rgba(255, 247, 237, 0.94));
+  border: 1px solid rgba(245, 158, 11, 0.18);
+  box-shadow: 0 8px 18px rgba(180, 83, 9, 0.05);
+  line-height: 1.6;
+  color: #7c2d12;
+  font-weight: 600;
 }
 
 .hover:hover {
@@ -269,95 +332,50 @@ export default {
 }
 
 .darkMode {
+  .content-box::before {
+    background: linear-gradient(90deg, rgba(96, 165, 250, 0.55), rgba(96, 165, 250, 0.12), transparent);
+  }
+
   .empty-state,
-  .empty-state__desc {
-    color: rgba(255,255,255,0.6);
-  }
-
-  .empty-state__title {
-    color: rgba(255,255,255,0.92);
-  }
-
-  .stat-card,
-  .bonus-row {
-    background: rgba(255, 255, 255, 0.04);
-    border-color: rgba(255, 255, 255, 0.08);
-  }
-
+  .empty-state__desc,
   .stat-card__label,
   .info-row span:first-child {
     color: rgba(255,255,255,0.6);
   }
 
-  .info-list {
-    border-color: rgba(255,255,255,0.08);
+  .empty-state__title,
+  .info-row span:last-child {
+    color: rgba(255,255,255,0.92);
+  }
+
+  .stat-card,
+  .info-list,
+  .bonus-row {
+    background: rgba(15, 23, 42, 0.46);
+    border-color: rgba(148, 163, 184, 0.18);
+    box-shadow: 0 12px 24px rgba(2, 6, 23, 0.2);
+  }
+
+  .stat-card::before {
+    background: linear-gradient(90deg, rgba(96, 165, 250, 0.78), rgba(96, 165, 250, 0.22));
   }
 
   .info-row {
-    background: rgba(255,255,255,0.03);
+    background: rgba(255,255,255,0.04);
   }
 
   .info-row + .info-row {
     border-top-color: rgba(255,255,255,0.08);
   }
 
-  .info-row span:last-child {
-    color: rgba(255,255,255,0.9);
+  .info-row span:first-child::before {
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
   }
-}
 
-.shadow {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  padding: 30px;
-  z-index: 1001;
-  box-sizing: border-box;
-  top: 0;
-  left: 0;
-  background-color: rgba(0, 0, 0, 0.7);
-}
-
-.manager-box {
-  background: #ffffff;
-  border-radius: 15px;
-  padding: 0 10px;
-  margin: 0 auto;
-  text-align: center;
-  line-height: 1;
-  vertical-align: middle;
-}
-
-.btn {
-  display: inline-block;
-  line-height: 1;
-  cursor: pointer;
-  background: #fff;
-  padding: 5px 6px;
-  border-radius: 3px;
-  font-size: 12px;
-  color: #000000;
-  margin: 0 5px;
-  outline: none;
-  border: 1px solid #dcdfe6;
-}
-
-.shadow.darkMode {
-  .manager-box {
-    background-color: #373737;
+  .bonus-row {
+    color: rgba(254, 215, 170, 0.96);
+    background: linear-gradient(135deg, rgba(120, 53, 15, 0.34), rgba(124, 45, 18, 0.24));
+    border-color: rgba(251, 191, 36, 0.18);
   }
-  .btn {
-    background-color: rgba($color: #ffffff, $alpha: 0.16);
-    color: rgba($color: #ffffff, $alpha: 0.6);
-    border: 1px solid rgba($color: #ffffff, $alpha: 0.6);
-  }
-}
-.tab-row {
-  padding: 12px 0;
-}
-
-.manager-content {
-  width: 100%;
-  height: 305px;
 }
 </style>
