@@ -61,6 +61,7 @@ import { getExtensionStorage } from "./extensionStorage";
 import { buildExportConfigText, validateAndUnpackImportedConfigText } from "./configTransfer";
 import { persistImportedConfig } from "./importConfig";
 import { normalizePopupPageSize } from "./popupPreferences";
+import { showProjectMessage } from "./message";
 import { FUND_TRANSACTIONS_STORAGE_KEY } from "./storageKeys";
 
 export default {
@@ -102,10 +103,9 @@ export default {
       }
 
       const onSuccess = () => {
-        this.$message({
+        showProjectMessage(this, {
           message: "已复制到剪贴板，请自行保存！",
           type: "success",
-          center: true,
         });
       };
 
@@ -124,10 +124,9 @@ export default {
           document.execCommand("copy");
           onSuccess();
         } catch (e) {
-          this.$message({
+          showProjectMessage(this, {
             message: "复制失败，请手动复制文本！",
             type: "error",
-            center: true,
           });
         } finally {
           document.body.removeChild(textarea);
@@ -150,10 +149,9 @@ export default {
     importInput() {
       const validationResult = validateAndUnpackImportedConfigText(this.inputConfigStr);
       if (!validationResult.ok) {
-        this.$message({
+        showProjectMessage(this, {
           message: validationResult.message,
           type: "error",
-          center: true,
         });
         return;
       }
@@ -173,10 +171,9 @@ export default {
       persistImportedConfig(config, () => {
         this.$emit("success", false);
 
-        this.$message({
+        showProjectMessage(this, {
           message: "恭喜,导入配置成功！",
           type: "success",
-          center: true,
         });
       });
     },
@@ -343,4 +340,5 @@ export default {
     background-color: rgba($color: #5aa4ff, $alpha: 0.2);
   }
 }
+
 </style>

@@ -1,5 +1,6 @@
 import Vue from "vue";
 import App from "./App";
+import "./message.scss";
 import axios from "axios";
 import {
   Switch,

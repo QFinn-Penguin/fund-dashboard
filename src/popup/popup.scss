@@ -1900,6 +1900,53 @@ table td {
 .transaction-dialog .el-dialog__headerbtn {
   top: 14px;
   right: 14px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.transaction-dialog .el-dialog__headerbtn:hover,
+.transaction-dialog .el-dialog__headerbtn:focus-visible {
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.transaction-dialog .el-dialog__headerbtn:focus-visible {
+  outline: none;
+}
+
+.transaction-dialog .el-dialog__headerbtn .el-dialog__close {
+  position: relative;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  font-size: 0;
+  line-height: 0;
+}
+
+.transaction-dialog .el-dialog__headerbtn .el-dialog__close::before,
+.transaction-dialog .el-dialog__headerbtn .el-dialog__close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 1.6px;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: center;
+}
+
+.transaction-dialog .el-dialog__headerbtn .el-dialog__close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.transaction-dialog .el-dialog__headerbtn .el-dialog__close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .transaction-dialog .el-dialog__body {
@@ -3603,10 +3650,10 @@ tbody tr:hover {
     color: rgba(255, 255, 255, 0.9);
   }
 
-  .transaction-dialog .el-dialog__headerbtn:hover .el-dialog__close,
-  .transaction-dialog .el-dialog__headerbtn:focus-visible .el-dialog__close {
-    color: rgba(144, 202, 255, 0.96);
-  }
+.transaction-dialog .el-dialog__headerbtn:hover .el-dialog__close,
+.transaction-dialog .el-dialog__headerbtn:focus-visible .el-dialog__close {
+  color: rgba(144, 202, 255, 0.96);
+}
 
   .transaction-dialog__title {
     color: rgba(255, 255, 255, 0.94);

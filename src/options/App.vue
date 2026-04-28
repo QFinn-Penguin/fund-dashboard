@@ -494,6 +494,7 @@
 import reward from "../common/reward";
 import changeLog from "../common/changeLog";
 import configBox from "../common/configBox";
+import { showProjectMessage } from "../common/message";
 import { getExtensionStorage } from "../common/extensionStorage";
 import { persistImportedConfig } from "../common/importConfig";
 import { FUND_TRANSACTIONS_STORAGE_KEY } from "../common/storageKeys";
@@ -808,10 +809,9 @@ export default {
       reader.onload = (event) => {
         const validationResult = validateAndUnpackImportedConfigText(event.target.result);
         if (!validationResult.ok) {
-          this.$message({
+          showProjectMessage(this, {
             message: validationResult.message,
             type: "error",
-            center: true,
           });
           this.$refs.importInput.value = null;
           return;
@@ -832,10 +832,9 @@ export default {
         persistImportedConfig(normalizedConfig, () => {
           this.initOption();
           chrome.runtime.sendMessage({ type: "refresh" });
-          this.$message({
+          showProjectMessage(this, {
             message: "恭喜,导入配置成功！",
             type: "success",
-            center: true,
           });
           this.$refs.importInput.value = null;
         });
@@ -1926,4 +1925,5 @@ export default {
     grid-template-columns: 1fr;
   }
 }
+
 </style>

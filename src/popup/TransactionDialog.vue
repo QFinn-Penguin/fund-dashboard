@@ -8,6 +8,7 @@
     :modal="true"
     :close-on-click-modal="false"
     :lock-scroll="true"
+    :show-close="true"
     top="12px"
     @close="closeHandler"
   >
