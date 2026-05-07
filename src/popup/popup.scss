@@ -328,6 +328,10 @@
   border-radius: 20px;
 }
 
+.fund-comparison-overlay__panel {
+  max-width: 920px;
+}
+
 .fund-detail-overlay--dark .fund-detail-overlay__backdrop {
   background: rgba(2, 6, 12, 0.58);
 }

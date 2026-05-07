@@ -238,6 +238,17 @@ export const shellMethods = {
       });
     }
   },
+  openFundComparison() {
+    this.marketVisible = false;
+    this.fundDetailVisible = false;
+    this.popupIndDetailVisible = false;
+    this.fundComparisonVisible = true;
+    this.detailShadow = true;
+  },
+  closeFundComparison() {
+    this.fundComparisonVisible = false;
+    this.detailShadow = false;
+  },
   checkInterval(isFirst) {
     clearInterval(this.myVar);
     clearInterval(this.myVar1);

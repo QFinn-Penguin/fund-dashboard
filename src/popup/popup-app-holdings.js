@@ -569,6 +569,7 @@ export const holdingsMethods = {
   },
   closeCharts() {
     this.fundDetailVisible = false;
+    this.fundComparisonVisible = false;
     this.popupIndDetailVisible = false;
     this.detailShadow = false;
     this.marketVisible = false;

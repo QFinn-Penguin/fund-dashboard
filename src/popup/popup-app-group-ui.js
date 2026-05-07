@@ -346,7 +346,7 @@ export const groupUiMethods = {
       return;
     }
 
-    if (event.key === "Escape" && (this.detailShadow || this.marketVisible)) {
+    if (event.key === "Escape" && (this.detailShadow || this.marketVisible || this.fundComparisonVisible)) {
       event.preventDefault();
       this.closeCharts();
       return;

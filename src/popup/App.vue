@@ -329,6 +329,7 @@
       >
         <div class="toolbar toolbar--primary">
           <input class="btn" type="button" @click="market" value="行情中心" />
+          <input class="btn" type="button" @click="openFundComparison" value="对比" />
           <button
             class="btn toolbar-refresh"
             :class="{ isRefresh: isRefresh }"
@@ -420,6 +421,26 @@
             :darkMode="darkMode"
             ref="fundDetail"
           ></fund-detail>
+        </div>
+      </div>
+    </div>
+    <div
+      v-if="fundComparisonVisible"
+      class="fund-detail-overlay"
+      :class="darkMode ? 'fund-detail-overlay--dark' : ''"
+      role="dialog"
+      aria-modal="true"
+      aria-label="基金对比"
+    >
+      <div class="fund-detail-overlay__backdrop" @click="closeFundComparison"></div>
+      <div class="fund-detail-overlay__viewport">
+        <div class="fund-detail-overlay__panel fund-comparison-overlay__panel">
+          <fund-comparison
+            :funds="dataListDft.length ? dataListDft : dataList"
+            :groupLabel="activeGroupLabel"
+            :darkMode="darkMode"
+            @close="closeFundComparison"
+          ></fund-comparison>
         </div>
       </div>
     </div>

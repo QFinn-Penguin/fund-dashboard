@@ -37,6 +37,7 @@ import { shellMethods } from "./popup-app-shell";
 
 const reward = () => import(/* webpackChunkName: "popup-reward" */ "../common/reward");
 const fundDetail = () => import(/* webpackChunkName: "popup-fund-detail" */ "../common/fundDetail");
+const fundComparison = () => import(/* webpackChunkName: "popup-fund-comparison" */ "../common/fundComparison");
 const market = () => import(/* webpackChunkName: "popup-market" */ "../common/market");
 const loadPopupIndDetail = () => import(/* webpackChunkName: "popup-ind-detail" */ "../common/indDetail");
 
@@ -44,6 +45,7 @@ export default {
   components: {
     reward,
     fundDetail,
+    fundComparison,
     market,
     FundBoard,
     TransactionDialog,
@@ -67,6 +69,7 @@ export default {
       rewardShadow: false,
       detailKey: 0,
       fundDetailVisible: false,
+      fundComparisonVisible: false,
       marketVisible: false,
       popupIndDetailVisible: false,
       popupIndDetailComponent: null,
@@ -505,6 +508,7 @@ export default {
       return !!(
         this.isEdit ||
         this.detailShadow ||
+        this.fundComparisonVisible ||
         this.marketVisible ||
         this.rewardShadow ||
         this.transactionDialogVisible
