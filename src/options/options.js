@@ -6,8 +6,6 @@ import {
   Switch,
   Slider,
   Message,
-  Radio,
-  RadioGroup,
   Button,
   Input,
   Loading,
@@ -17,8 +15,6 @@ import {
 
 Vue.use(Switch)
 Vue.use(Slider)
-Vue.use(Radio)
-Vue.use(RadioGroup)
 Vue.use(Button)
 Vue.use(Input)
 Vue.use(Dialog)

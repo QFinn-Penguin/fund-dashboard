@@ -5,12 +5,14 @@ import { requestWithBackground } from "../common/request";
 import { FUND_TRANSACTIONS_STORAGE_KEY } from "../common/storageKeys";
 import {
   DEFAULT_DISPLAY_TOGGLES,
+  DEFAULT_GAIN_STAT_SCOPE,
   DEFAULT_POPUP_PAGE_SIZE,
   DEFAULT_POPUP_SHORTCUTS,
   normalizeShortcut,
 } from "../common/popupPreferences";
 import {
   createSwitchGroupState,
+  deriveAllFundsFromConfig,
   deriveCurrentFundsFromConfig,
   deriveFundsFromGroup,
 } from "../common/fundStorage";
@@ -58,6 +60,7 @@ export default {
       RealtimeIndcode: null,
       dataList: [],
       dataListDft: [],
+      gainStatSourceDataList: [],
       listError: "",
       myVar: null,
       myVar1: null,
@@ -73,6 +76,7 @@ export default {
       showAmount: DEFAULT_DISPLAY_TOGGLES.showAmount,
       showCost: DEFAULT_DISPLAY_TOGGLES.showCost,
       showCostRate: DEFAULT_DISPLAY_TOGGLES.showCostRate,
+      gainStatScope: DEFAULT_GAIN_STAT_SCOPE,
       showPrevGszzl: DEFAULT_DISPLAY_TOGGLES.showPrevGszzl,
       showGSZ: DEFAULT_DISPLAY_TOGGLES.showGSZ,
       fundList: ["001618"],
@@ -275,10 +279,71 @@ export default {
     currentGroupFocusFundCode() {
       return this.getCurrentGroupFocusFundCode();
     },
+    gainStatFundEntries() {
+      if (this.gainStatScope === "all") {
+        const allFunds = deriveAllFundsFromConfig(
+          {
+            fundListGroup: this.fundListGroup,
+            fundListM: this.fundListM,
+          },
+          (fund) => fund
+        );
+
+        if (allFunds.length) {
+          return allFunds;
+        }
+      }
+
+      return this.getCurrentGroupWorkingFunds();
+    },
+    gainStatFundCodeMap() {
+      return this.gainStatFundEntries.reduce((map, fund) => {
+        const code = String((fund && (fund.code || fund.fundcode)) || "").trim();
+        if (!code) {
+          return map;
+        }
+
+        const num = Number(fund && fund.num);
+        const cost = Number(fund && fund.cost);
+        const currentEntry = map[code] || { num: 0, cost: 0 };
+
+        currentEntry.num += Number.isFinite(num) ? num : 0;
+        currentEntry.cost += Number.isFinite(cost) ? cost : 0;
+        map[code] = currentEntry;
+        return map;
+      }, {});
+    },
+    gainStatDataList() {
+      const fundMap = this.gainStatFundCodeMap;
+      const sourceDataList = this.gainStatSourceDataList.length
+        ? this.gainStatSourceDataList
+        : this.dataList;
+
+      return sourceDataList.reduce((list, item) => {
+        const code = String((item && item.fundcode) || "").trim();
+        const matchedFund = fundMap[code];
+        if (!matchedFund) {
+          return list;
+        }
+
+        const scopedItem = {
+          ...item,
+          num: matchedFund.num,
+          cost: matchedFund.cost,
+        };
+
+        scopedItem.amount = this.calculateMoney(scopedItem);
+        scopedItem.gains = this.calculate(scopedItem, item.hasReplace);
+        scopedItem.costGains = this.calculateCost(scopedItem);
+
+        list.push(scopedItem);
+        return list;
+      }, []);
+    },
     allGains() {
       let allGains = 0;
       let allNum = 0;
-      this.dataList.forEach((val) => {
+      this.gainStatDataList.forEach((val) => {
         const gains = Number(val && val.gains);
         const amount = Number(val && val.amount);
         if (Number.isFinite(gains)) {
@@ -295,7 +360,7 @@ export default {
     allCostGains() {
       let allCostGains = 0;
       let allNum = 0;
-      this.dataList.forEach((val) => {
+      this.gainStatDataList.forEach((val) => {
         const costGains = Number(val && val.costGains);
         const amount = Number(val && val.amount);
         if (Number.isFinite(costGains)) {

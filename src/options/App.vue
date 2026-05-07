@@ -170,6 +170,34 @@
                 >
                 </el-switch>
               </div>
+              <div class="setting-row setting-row--choice compact">
+                <div class="setting-main">
+                  <div class="setting-label">收益统计范围</div>
+                  <div class="setting-help">控制首页当日估算收益和持有收益的汇总口径。</div>
+                </div>
+                <div class="choice-group choice-group--soft choice-group--gain-scope">
+                  <div class="choice-group__list choice-group__list--gain-scope" role="radiogroup" aria-label="收益统计范围">
+                    <button
+                      type="button"
+                      class="choice-chip"
+                      :class="{ 'is-selected': gainStatScope === 'current' }"
+                      :aria-pressed="gainStatScope === 'current' ? 'true' : 'false'"
+                      @click="selectChoice('gainStatScope', 'current', true)"
+                    >
+                      当前分组
+                    </button>
+                    <button
+                      type="button"
+                      class="choice-chip"
+                      :class="{ 'is-selected': gainStatScope === 'all' }"
+                      :aria-pressed="gainStatScope === 'all' ? 'true' : 'false'"
+                      @click="selectChoice('gainStatScope', 'all', true)"
+                    >
+                      所有分组
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -212,40 +240,87 @@
         <div class="setting-group setting-group--badge-flow">
           <div class="group-heading group-heading--badge">步骤 1 · 是否显示角标</div>
           <div class="choice-group choice-group--soft choice-group--badge-step1">
-            <el-radio-group
-              v-model="showBadge"
-              @change="changeOption($event, 'showBadge', true)"
-            >
-              <el-radio border :label="1">打开角标</el-radio>
-              <el-radio border :label="2">关闭角标</el-radio>
-            </el-radio-group>
+            <div class="choice-group__list choice-group__list--two-column" role="radiogroup" aria-label="是否显示角标">
+              <button
+                type="button"
+                class="choice-chip"
+                :class="{ 'is-selected': showBadge === 1 }"
+                :aria-pressed="showBadge === 1 ? 'true' : 'false'"
+                @click="selectChoice('showBadge', 1, true)"
+              >
+                打开角标
+              </button>
+              <button
+                type="button"
+                class="choice-chip"
+                :class="{ 'is-selected': showBadge === 2 }"
+                :aria-pressed="showBadge === 2 ? 'true' : 'false'"
+                @click="selectChoice('showBadge', 2, true)"
+              >
+                关闭角标
+              </button>
+            </div>
           </div>
         </div>
 
         <div v-if="showBadge == 1" class="setting-group setting-group--badge-flow">
           <div class="group-heading group-heading--badge">步骤 2 · 角标统计范围</div>
           <div class="choice-group choice-group--soft choice-group--badge-step2">
-            <el-radio-group
-              v-model="BadgeContent"
-              @change="changeOption($event, 'BadgeContent', true)"
-            >
-              <el-radio border :label="1">当前分组特别关注</el-radio>
-              <el-radio border :label="2">当前分组全部基金</el-radio>
-              <el-radio border :label="3">单个指数</el-radio>
-            </el-radio-group>
+            <div class="choice-group__list choice-group__list--badge-step2" role="radiogroup" aria-label="角标统计范围">
+              <button
+                type="button"
+                class="choice-chip"
+                :class="{ 'is-selected': BadgeContent === 1 }"
+                :aria-pressed="BadgeContent === 1 ? 'true' : 'false'"
+                @click="selectChoice('BadgeContent', 1, true)"
+              >
+                当前分组特别关注
+              </button>
+              <button
+                type="button"
+                class="choice-chip"
+                :class="{ 'is-selected': BadgeContent === 2 }"
+                :aria-pressed="BadgeContent === 2 ? 'true' : 'false'"
+                @click="selectChoice('BadgeContent', 2, true)"
+              >
+                当前分组全部基金
+              </button>
+              <button
+                type="button"
+                class="choice-chip"
+                :class="{ 'is-selected': BadgeContent === 3 }"
+                :aria-pressed="BadgeContent === 3 ? 'true' : 'false'"
+                @click="selectChoice('BadgeContent', 3, true)"
+              >
+                单个指数
+              </button>
+            </div>
           </div>
         </div>
 
         <div v-if="showBadge == 1 && BadgeContent != 3" class="setting-group setting-group--badge-flow">
           <div class="group-heading group-heading--badge">步骤 3 · 角标显示指标</div>
           <div class="choice-group choice-group--soft choice-group--badge-step3">
-            <el-radio-group
-              v-model="BadgeType"
-              @change="changeOption($event, 'BadgeType', true)"
-            >
-              <el-radio border :label="1">日收益率</el-radio>
-              <el-radio border :label="2">日收益额</el-radio>
-            </el-radio-group>
+            <div class="choice-group__list choice-group__list--two-column" role="radiogroup" aria-label="角标显示指标">
+              <button
+                type="button"
+                class="choice-chip"
+                :class="{ 'is-selected': BadgeType === 1 }"
+                :aria-pressed="BadgeType === 1 ? 'true' : 'false'"
+                @click="selectChoice('BadgeType', 1, true)"
+              >
+                日收益率
+              </button>
+              <button
+                type="button"
+                class="choice-chip"
+                :class="{ 'is-selected': BadgeType === 2 }"
+                :aria-pressed="BadgeType === 2 ? 'true' : 'false'"
+                @click="selectChoice('BadgeType', 2, true)"
+              >
+                日收益额
+              </button>
+            </div>
           </div>
         </div>
 
@@ -502,10 +577,12 @@ const { version } = require("../../package.json");
 import { buildExportConfigText, validateAndUnpackImportedConfigText } from "../common/configTransfer";
 import {
   DEFAULT_DISPLAY_TOGGLES,
+  DEFAULT_GAIN_STAT_SCOPE,
   DEFAULT_POPUP_PAGE_SIZE,
   DEFAULT_POPUP_SHORTCUTS,
   buildOptionsPreferenceArtifacts,
   buildShortcutFromKeyEvent,
+  normalizeGainStatScope,
   normalizePopupPageSize,
   normalizeShortcut,
   POPUP_SHORTCUT_DISPLAY_TEXT,
@@ -530,6 +607,7 @@ export default {
       showGains: DEFAULT_DISPLAY_TOGGLES.showGains,
       showCost: DEFAULT_DISPLAY_TOGGLES.showCost,
       showCostRate: DEFAULT_DISPLAY_TOGGLES.showCostRate,
+      gainStatScope: DEFAULT_GAIN_STAT_SCOPE,
       showPrevGszzl: DEFAULT_DISPLAY_TOGGLES.showPrevGszzl,
       popupPageSize: DEFAULT_POPUP_PAGE_SIZE,
       darkMode: false,
@@ -654,6 +732,14 @@ export default {
     stopShortcutCapture() {
       this.activeShortcutField = "";
     },
+    selectChoice(type, val, sendMessage) {
+      if (this[type] === val) {
+        return;
+      }
+
+      this[type] = val;
+      this.changeOption(val, type, sendMessage);
+    },
     captureShortcut(event, type) {
       if (event.key === "Tab") {
         return;
@@ -691,6 +777,7 @@ export default {
           "showGains",
           "showCost",
           "showCostRate",
+          "gainStatScope",
           "showPrevGszzl",
           "showGSZ",
           "popupPageSize",
@@ -735,6 +822,7 @@ export default {
             this.showAmount = optionPreferenceArtifacts.displayToggleState.showAmount;
             this.showGains = optionPreferenceArtifacts.displayToggleState.showGains;
           }
+          this.gainStatScope = normalizeGainStatScope(optionPreferenceArtifacts.gainStatScope);
           const normalizedRes = buildOptionsImportArtifacts({
             ...res,
             popupPageSize: optionPreferenceArtifacts.pageSize,
@@ -774,12 +862,16 @@ export default {
             DEFAULT_POPUP_SHORTCUTS.pageNextShortcut
           );
 
-          if (Object.keys(optionPreferenceArtifacts.missingDisplayToggles).length) {
-            chrome.storage.sync.set(optionPreferenceArtifacts.missingDisplayToggles);
-          }
+        if (Object.keys(optionPreferenceArtifacts.missingDisplayToggles).length) {
+          chrome.storage.sync.set(optionPreferenceArtifacts.missingDisplayToggles);
         }
-      );
-    },
+
+        if (Object.keys(optionPreferenceArtifacts.missingGainStatScope).length) {
+          chrome.storage.sync.set(optionPreferenceArtifacts.missingGainStatScope);
+        }
+      }
+    );
+  },
     exportConfig() {
       getExtensionStorage(null, (res) => {
         this.revokeConfigHref();
@@ -1151,6 +1243,22 @@ export default {
   align-items: flex-start;
 }
 
+.setting-row--choice {
+  display: block;
+  align-items: flex-start;
+}
+
+.setting-row--choice .setting-main {
+  width: 100%;
+  min-width: 0;
+}
+
+.setting-row--choice .choice-group {
+  width: 100%;
+  min-width: 0;
+  margin-top: 12px;
+}
+
 .setting-main {
   flex: 1;
   min-width: 0;
@@ -1195,8 +1303,69 @@ export default {
   padding: 4px 0 0;
 }
 
+.choice-group__list {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.choice-group__list--two-column,
+.choice-group__list--gain-scope {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.choice-group__list--badge-step2 {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(160px, 0.9fr);
+}
+
+.choice-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0 15px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(226, 232, 240, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #334155;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease,
+    transform 0.16s ease, color 0.16s ease;
+}
+
+.choice-chip:hover {
+  border-color: rgba(148, 163, 184, 0.36);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(235, 241, 249, 0.98));
+}
+
+.choice-chip:focus-visible {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+}
+
+.choice-chip.is-selected {
+  border-color: rgba(96, 165, 250, 0.38);
+  background: linear-gradient(180deg, rgba(219, 234, 254, 0.98), rgba(191, 219, 254, 0.92));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76), 0 8px 18px rgba(96, 165, 250, 0.18);
+  transform: translateY(-1px);
+  color: #1d4ed8;
+}
+
 .choice-group--soft {
+  width: 100%;
+  max-width: 100%;
   padding: 12px;
+  box-sizing: border-box;
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(243, 247, 253, 0.98), rgba(233, 240, 248, 0.92));
@@ -1212,20 +1381,7 @@ export default {
   padding-bottom: 12px;
 }
 
-.choice-group--badge-step1 :deep(.el-radio-group),
-.choice-group--badge-step3 :deep(.el-radio-group) {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  align-items: stretch;
-}
 
-.choice-group--badge-step2 :deep(.el-radio-group) {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1.3fr) minmax(160px, 0.9fr);
-  gap: 8px;
-  align-items: stretch;
-}
 
 .help-panel {
   margin-top: 14px;
@@ -1253,72 +1409,6 @@ export default {
 
 .help-list li + li {
   margin-top: 4px;
-}
-
-::v-deep .choice-group--soft .el-radio-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: stretch;
-}
-
-::v-deep .choice-group--soft .el-radio.is-bordered {
-  display: inline-flex;
-  align-items: center;
-  height: 40px;
-  margin: 0;
-  padding: 0 15px;
-  border-radius: 999px;
-  border-color: rgba(148, 163, 184, 0.26);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(226, 232, 240, 0.94));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.86);
-  transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease,
-    transform 0.16s ease;
-}
-
-::v-deep .choice-group--soft .el-radio__input {
-  display: inline-flex;
-  align-items: center;
-  flex: 0 0 auto;
-  height: 100%;
-  vertical-align: middle;
-}
-
-::v-deep .choice-group--soft .el-radio__inner {
-  top: 0;
-}
-
-::v-deep .choice-group--soft .el-radio.is-bordered:hover {
-  border-color: rgba(148, 163, 184, 0.36);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(235, 241, 249, 0.98));
-}
-
-::v-deep .choice-group--soft .el-radio.is-bordered.is-checked {
-  border-color: rgba(96, 165, 250, 0.38);
-  background: linear-gradient(180deg, rgba(219, 234, 254, 0.98), rgba(191, 219, 254, 0.92));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.76), 0 8px 18px rgba(96, 165, 250, 0.18);
-  transform: translateY(-1px);
-}
-
-::v-deep .choice-group--soft .el-radio__label {
-  display: inline-flex;
-  align-items: center;
-  height: 100%;
-  padding-left: 10px;
-  line-height: 1;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: #334155;
-}
-
-::v-deep .choice-group--soft .el-radio__input.is-checked + .el-radio__label {
-  color: #1d4ed8;
-}
-
-::v-deep .choice-group--soft .el-radio__input.is-checked .el-radio__inner {
-  background-color: rgba(59, 130, 246, 0.9);
-  border: 1px solid rgba(59, 130, 246, 0.9);
 }
 
 .page-size-setting {
@@ -1761,17 +1851,32 @@ export default {
     background-color: rgba(59, 130, 246, 0.8);
   }
 
-  ::v-deep .el-radio {
-    color: rgba(226, 232, 240, 0.84);
+  .choice-chip {
+    border-color: rgba(148, 163, 184, 0.18);
+    background: linear-gradient(180deg, rgba(51, 65, 85, 0.92), rgba(31, 41, 55, 0.92));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    color: rgba(226, 232, 240, 0.9);
   }
 
-  .choice-group--badge-step2 :deep(.el-radio-group) {
+  .choice-chip:hover {
+    border-color: rgba(148, 163, 184, 0.28);
+    background: linear-gradient(180deg, rgba(59, 73, 92, 0.94), rgba(35, 45, 61, 0.94));
+  }
+
+  .choice-chip:focus-visible {
+    border-color: rgba(96, 165, 250, 0.46);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  }
+
+  .choice-chip.is-selected {
+    border-color: rgba(96, 165, 250, 0.34);
+    background: linear-gradient(180deg, rgba(59, 130, 246, 0.24), rgba(37, 99, 235, 0.2));
+    box-shadow: inset 0 1px 0 rgba(191, 219, 254, 0.1), 0 8px 18px rgba(15, 23, 42, 0.22);
+    color: rgba(147, 197, 253, 0.96);
+  }
+
+  .choice-group__list--badge-step2 {
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 1.25fr) minmax(150px, 0.85fr);
-  }
-
-  .choice-group--badge-step1 :deep(.el-radio-group),
-  .choice-group--badge-step3 :deep(.el-radio-group) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .setting-panel--utility-expanded {
@@ -1817,35 +1922,6 @@ export default {
     box-shadow: inset 0 1px 0 rgba(219, 234, 254, 0.14), 0 22px 34px rgba(30, 64, 175, 0.28);
   }
 
-  ::v-deep .choice-group--soft .el-radio.is-bordered {
-    border-color: rgba(148, 163, 184, 0.18);
-    background: linear-gradient(180deg, rgba(51, 65, 85, 0.92), rgba(31, 41, 55, 0.92));
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  }
-
-  ::v-deep .choice-group--soft .el-radio.is-bordered:hover {
-    border-color: rgba(148, 163, 184, 0.28);
-    background: linear-gradient(180deg, rgba(59, 73, 92, 0.94), rgba(35, 45, 61, 0.94));
-  }
-
-  ::v-deep .choice-group--soft .el-radio.is-bordered.is-checked {
-    border-color: rgba(96, 165, 250, 0.34);
-    background: linear-gradient(180deg, rgba(59, 130, 246, 0.24), rgba(37, 99, 235, 0.2));
-    box-shadow: inset 0 1px 0 rgba(191, 219, 254, 0.1), 0 8px 18px rgba(15, 23, 42, 0.22);
-  }
-
-  ::v-deep .choice-group--soft .el-radio__label {
-    color: rgba(226, 232, 240, 0.9);
-  }
-
-  ::v-deep .choice-group--soft .el-radio__input.is-checked + .el-radio__label {
-    color: rgba(147, 197, 253, 0.96);
-  }
-
-  ::v-deep .choice-group--soft .el-radio__input.is-checked .el-radio__inner {
-    background-color: rgba(59, 130, 246, 0.85);
-    border: 1px solid rgba(59, 130, 246, 0.85);
-  }
 }
 
 @media (max-width: 760px) {
@@ -1874,6 +1950,12 @@ export default {
   .range-control {
     width: 100%;
     min-width: 0;
+  }
+
+  .setting-row--choice .choice-group {
+    width: 100%;
+    min-width: 0;
+    margin-top: 10px;
   }
 
   .shortcut-input-wrap,
@@ -1916,12 +1998,9 @@ export default {
     justify-content: flex-start;
   }
 
-  .choice-group--badge-step2 :deep(.el-radio-group) {
-    grid-template-columns: 1fr;
-  }
-
-  .choice-group--badge-step1 :deep(.el-radio-group),
-  .choice-group--badge-step3 :deep(.el-radio-group) {
+  .choice-group__list--badge-step2,
+  .choice-group__list--two-column,
+  .choice-group__list--gain-scope {
     grid-template-columns: 1fr;
   }
 }

@@ -15,6 +15,8 @@ export const DEFAULT_DISPLAY_TOGGLES = {
 
 export const DEFAULT_POPUP_PAGE_SIZE = 4;
 
+export const DEFAULT_GAIN_STAT_SCOPE = "current";
+
 export const DEFAULT_POPUP_SHORTCUTS = {
   groupNextShortcut: "ALT+E",
   pagePrevShortcut: "ALT+A",
@@ -164,15 +166,27 @@ export function normalizePopupPageSize(value) {
     : DEFAULT_POPUP_PAGE_SIZE;
 }
 
+export function normalizeGainStatScope(value) {
+  return value === "all" ? "all" : DEFAULT_GAIN_STAT_SCOPE;
+}
+
 export function buildPopupPreferenceArtifacts(config = {}) {
   const { nextState: displayToggleState, missingEntries: missingDisplayToggles } =
     getDisplayToggleState(config);
   const grayscaleValue = config.grayscaleValue ? config.grayscaleValue : 0;
   const opacityValue = config.opacityValue ? config.opacityValue : 0;
+  const gainStatScope = normalizeGainStatScope(config.gainStatScope);
 
   return {
     displayToggleState,
     missingDisplayToggles,
+    gainStatScope,
+    missingGainStatScope:
+      typeof config.gainStatScope === "string"
+        ? {}
+        : {
+            gainStatScope: DEFAULT_GAIN_STAT_SCOPE,
+          },
     shortcuts: buildShortcutArtifacts(config),
     pageSize: normalizePopupPageSize(config.popupPageSize),
     shouldPersistDefaultPageSize: !Number.isFinite(Number(config.popupPageSize)),

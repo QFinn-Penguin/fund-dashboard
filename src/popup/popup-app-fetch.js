@@ -11,6 +11,7 @@ import {
   normalizePositionOperation,
 } from "../common/fundTransactions";
 import { normalizeFundEntry } from "../common/fundSnapshot";
+import { deriveAllFundsFromConfig } from "../common/fundStorage";
 
 export const fetchMethods = {
   getData(type, options = {}) {
@@ -22,6 +23,27 @@ export const fetchMethods = {
           };
     const isSilentRefresh = normalizedOptions.silent && this.dataList.length > 0;
     const currentFunds = this.getCurrentGroupWorkingFunds();
+    const sourceFunds = this.gainStatScope === "all"
+      ? deriveAllFundsFromConfig(
+          {
+            fundListGroup: this.fundListGroup,
+            fundListM: this.fundListM,
+          },
+          (fund) => fund
+        )
+      : currentFunds;
+    const fetchFunds = sourceFunds.reduce((list, fund) => {
+      const code = String((fund && (fund.code || fund.fundcode)) || "").trim();
+      if (!code || list.some((item) => item.code === code)) {
+        return list;
+      }
+
+      list.push({
+        ...fund,
+        code,
+      });
+      return list;
+    }, []);
     let fundlist = currentFunds.map((val) => val.code).join(",");
     if (isSilentRefresh) {
       this.refreshingList = true;
@@ -34,11 +56,12 @@ export const fetchMethods = {
       this.refreshingList = false;
       this.dataList = [];
       this.dataListDft = [];
+      this.gainStatSourceDataList = [];
       this.resetPagination();
       return;
     }
     Promise.all(
-      currentFunds.map((fund) => {
+      fetchFunds.map((fund) => {
         const estimateUrl = `https://fundgz.1234567.com.cn/js/${fund.code}.js?rt=${new Date().getTime()}`;
         const historyUrl = `https://fundmobapi.eastmoney.com/FundMApi/FundNetDiagram.ashx?FCODE=${fund.code}&RANGE=y&deviceid=Wap&plat=Wap&product=EFund&version=2.0.0&_=${new Date().getTime()}`;
         const estimateRequest = this.requestByBackground({
@@ -162,6 +185,12 @@ export const fetchMethods = {
           })
           .filter(Boolean);
 
+        this.gainStatSourceDataList = dataList;
+
+        const displayDataList = dataList.filter((item) => {
+          return currentFunds.some((fund) => fund.code == item.fundcode);
+        });
+
         const fundsToHydrate = currentFunds.filter((fund) => {
           return !fund.name || fund.name == fund.code;
         });
@@ -171,7 +200,7 @@ export const fetchMethods = {
         }
 
         this.mapCurrentGroupWorkingFunds((fund) => {
-          const matched = dataList.find((item) => item.fundcode == fund.code);
+          const matched = displayDataList.find((item) => item.fundcode == fund.code);
           return matched
             ? {
                 ...fund,
@@ -186,18 +215,18 @@ export const fetchMethods = {
         if (this.showBadge == 1 && this.BadgeContent != 3) {
           chrome.runtime.sendMessage({
             type: "refreshBadgeAllGains",
-            data: dataList,
+            data: displayDataList,
           });
         }
 
-        this.dataListDft = [...dataList];
+        this.dataListDft = [...displayDataList];
         if (type == "add") {
-          this.dataList = dataList;
+          this.dataList = displayDataList;
         } else if (this.sortTypeObj.type != "none") {
           this.sortType[this.sortTypeObj.name] = this.sortTypeObj.type;
-          this.dataList = dataList.sort(this.compare(this.sortTypeObj.name, this.sortTypeObj.type));
+          this.dataList = displayDataList.sort(this.compare(this.sortTypeObj.name, this.sortTypeObj.type));
         } else {
-          this.dataList = dataList;
+          this.dataList = displayDataList;
         }
 
         this.trackListValueChanges(this.dataList);

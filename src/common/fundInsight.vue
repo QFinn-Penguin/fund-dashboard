@@ -40,21 +40,19 @@
           <div class="detail-card__header">
             <div class="detail-card__heading">
               <div class="detail-card__eyebrow">基准对比卡</div>
-              <h6 class="detail-card__title detail-card__title--benchmark">
-                <template v-for="(token, index) in benchmarkTitleTokens">
-                  <wbr v-if="token.type === 'break'" :key="`benchmark-title-break-${index}`" />
-                  <span
-                    v-else
-                    :key="`benchmark-title-token-${index}`"
-                    :class="[
-                      'benchmark-title__token',
-                      token.type === 'weight' && 'benchmark-title__token--weight',
-                    ]"
-                  >
-                    {{ token.text }}
-                  </span>
-                </template>
-              </h6>
+              <h6 class="detail-card__title detail-card__title--benchmark">{{ benchmarkTitleView.title }}</h6>
+              <div v-if="benchmarkTitleView.formulaSegments.length" class="benchmark-formula">
+                <div
+                  v-for="(segment, index) in benchmarkTitleView.formulaSegments"
+                  :key="`benchmark-formula-segment-${index}`"
+                  class="benchmark-formula__row"
+                >
+                  <span v-if="segment.operator" class="benchmark-formula__operator">{{ segment.operator }}</span>
+                  <span v-if="segment.main" class="benchmark-formula__main">{{ segment.main }}</span>
+                  <span v-if="segment.note" class="benchmark-formula__note">{{ segment.note }}</span>
+                  <span v-if="segment.weight" class="benchmark-formula__weight">{{ segment.weight }}</span>
+                </div>
+              </div>
             </div>
             <span class="pill" :class="benchmarkInfo.type === 'reference' ? 'pill--reference' : 'pill--neutral'">
               {{ benchmarkInfo.typeLabel }}
@@ -214,40 +212,53 @@ export default {
     this.init();
   },
   computed: {
-    benchmarkTitleTokens() {
+    benchmarkTitleView() {
       const name = this.benchmarkInfo && this.benchmarkInfo.name ? String(this.benchmarkInfo.name).trim() : "";
 
       if (!name) {
-        return [];
+        return { title: "", formulaSegments: [] };
       }
 
-      return name
+      const parsedSegments = name
         .split(/(?=[+＋])/)
         .filter(Boolean)
-        .reduce((tokens, segment, segmentIndex) => {
+        .reduce((segments, rawSegment, segmentIndex) => {
+          const hasPrefix = segmentIndex > 0 && /^[+＋]/.test(rawSegment);
+          const prefix = hasPrefix ? rawSegment.charAt(0) : "";
+          const segment = hasPrefix ? rawSegment.slice(1).trim() : rawSegment.trim();
           const weightMatch = segment.match(/([*＊×xX]\s*\d+(?:\.\d+)?%)$/);
-          const mainText = weightMatch ? segment.slice(0, -weightMatch[1].length) : segment;
-          const weightText = weightMatch ? weightMatch[1] : "";
-          const displayText =
-            segmentIndex > 0 && /^[+＋]/.test(mainText)
-              ? mainText.replace(/^([+＋])/, "$1\u202F")
-              : mainText;
+          const bodyText = weightMatch ? segment.slice(0, -weightMatch[1].length).trim() : segment;
+          const weight = weightMatch ? weightMatch[1].replace(/^[*＊×xX]\s*/, "× ") : "";
+          const noteMatch = bodyText.match(/^(.*?)(（[^）]+）|\([^)]*\))$/);
+          const main = (noteMatch ? noteMatch[1] : bodyText).trim();
+          const note = (noteMatch ? noteMatch[2] : "").trim();
 
-          if (segmentIndex > 0) {
-            tokens.push({ type: "break" });
-          }
+          segments.push({
+            prefix,
+            main: main || bodyText,
+            note,
+            weight,
+          });
 
-          if (displayText) {
-            tokens.push({ type: "text", text: displayText });
-          }
-
-          if (weightText) {
-            tokens.push({ type: "break" });
-            tokens.push({ type: "weight", text: weightText });
-          }
-
-          return tokens;
+          return segments;
         }, []);
+
+      const title = parsedSegments[0] && parsedSegments[0].main ? parsedSegments[0].main : name;
+      const hasFormulaDetails = parsedSegments.some((segment) => segment.prefix || segment.note || segment.weight);
+
+      if (!hasFormulaDetails) {
+        return { title, formulaSegments: [] };
+      }
+
+      return {
+        title,
+        formulaSegments: parsedSegments.map((segment, index) => ({
+          operator: index > 0 ? segment.prefix || "+" : "",
+          main: index > 0 ? segment.main : "",
+          note: segment.note,
+          weight: segment.weight,
+        })),
+      };
     },
   },
   methods: {
@@ -444,13 +455,61 @@ export default {
 }
 
 .detail-card__title--benchmark {
-  line-height: 1.6;
-  text-wrap: balance;
-  line-break: strict;
+  line-height: 1.35;
 }
 
-.benchmark-title__token--weight {
+.benchmark-formula {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 13px;
+  background: rgba(241, 245, 249, 0.82);
+  border: 1px solid rgba(226, 232, 240, 0.82);
+}
+
+.benchmark-formula__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.benchmark-formula__operator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.12);
+  font-weight: 800;
+}
+
+.benchmark-formula__main {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.benchmark-formula__note {
+  color: #475569;
+}
+
+.benchmark-formula__weight {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
   white-space: nowrap;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #1d4ed8;
+  background: rgba(59, 130, 246, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.16);
 }
 
 .detail-card__note {
@@ -676,6 +735,30 @@ export default {
     color: #dbeafe;
     background: rgba(59, 130, 246, 0.14);
     box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.22);
+  }
+
+  .benchmark-formula {
+    background: rgba(15, 23, 42, 0.36);
+    border-color: rgba(148, 163, 184, 0.16);
+  }
+
+  .benchmark-formula__operator {
+    color: #dbeafe;
+    background: rgba(59, 130, 246, 0.18);
+  }
+
+  .benchmark-formula__main {
+    color: rgba(248, 250, 252, 0.92);
+  }
+
+  .benchmark-formula__note {
+    color: rgba(226, 232, 240, 0.76);
+  }
+
+  .benchmark-formula__weight {
+    color: #dbeafe;
+    background: rgba(59, 130, 246, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.26);
   }
 }
 </style>

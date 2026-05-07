@@ -349,15 +349,5 @@ export default {
     background-color: rgba($color: #ffffff, $alpha: 0.02);
     border-color: rgba($color: #ffffff, $alpha: 0.08);
   }
-  ::v-deep .el-radio-button--mini .el-radio-button__inner {
-    background-color: rgba($color: #ffffff, $alpha: 0.16);
-    color: rgba($color: #ffffff, $alpha: 0.6);
-    border: 1px solid rgba($color: #ffffff, $alpha: 0.37);
-  }
-  ::v-deep .el-radio-button__orig-radio:checked + .el-radio-button__inner {
-    background-color: rgba($color: #409eff, $alpha: 0.6);
-    color: rgba($color: #ffffff, $alpha: 0.6);
-    border-color: rgba($color: #409eff, $alpha: 0.37);
-  }
 }
 </style>

@@ -6,8 +6,6 @@ import {
   Select,
   Option,
   DatePicker,
-  RadioButton,
-  RadioGroup,
   Dialog,
   Loading,
   Icon
@@ -21,8 +19,6 @@ Vue.prototype.$loading = Loading.service;
 Vue.use(Select)
 Vue.use(Option)
 Vue.use(DatePicker)
-Vue.use(RadioButton)
-Vue.use(RadioGroup)
 Vue.use(Dialog)
 Vue.use(Loading)
 Vue.use(Icon)

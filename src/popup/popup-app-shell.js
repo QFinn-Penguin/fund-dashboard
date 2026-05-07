@@ -29,8 +29,14 @@ export const shellMethods = {
       return;
     }
 
+    if (changes.gainStatScope) {
+      this.gainStatScope = changes.gainStatScope.newValue;
+    }
+
     if (!changes.grayscaleValue && !changes.opacityValue) {
-      return;
+      if (!changes.gainStatScope) {
+        return;
+      }
     }
 
     this.applyPopupAppearancePreferences({
@@ -83,6 +89,7 @@ export const shellMethods = {
       "currentGroupIndex",
       "showAmount",
       "showGains",
+      "gainStatScope",
       "seciList",
       "darkMode",
       "normalFontSize",
@@ -155,6 +162,7 @@ export const shellMethods = {
         this.seciList = res.seciList ? res.seciList : this.seciList;
         this.showAmount = popupPreferenceArtifacts.displayToggleState.showAmount;
         this.showGains = popupPreferenceArtifacts.displayToggleState.showGains;
+        this.gainStatScope = popupPreferenceArtifacts.gainStatScope;
         this.RealtimeFundcode = initFundStorageArtifacts.normalizedConfig.RealtimeFundcode;
         this.RealtimeIndcode = res.RealtimeIndcode;
         this.isLiveUpdate = res.isLiveUpdate ? res.isLiveUpdate : false;
@@ -176,6 +184,10 @@ export const shellMethods = {
 
         if (Object.keys(popupPreferenceArtifacts.missingDisplayToggles).length) {
           chrome.storage.sync.set(popupPreferenceArtifacts.missingDisplayToggles);
+        }
+
+        if (Object.keys(popupPreferenceArtifacts.missingGainStatScope).length) {
+          chrome.storage.sync.set(popupPreferenceArtifacts.missingGainStatScope);
         }
 
         if (popupPreferenceArtifacts.shouldPersistDefaultPageSize) {

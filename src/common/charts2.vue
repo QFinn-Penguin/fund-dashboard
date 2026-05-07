@@ -12,27 +12,48 @@
     <div v-if="chartTrustNote" class="chart-trust-note">{{ chartTrustNote }}</div>
     <div v-if="modeHint" class="mode-hint">{{ modeHint }}</div>
     <div class="chart-toolbar">
-      <el-radio-group
+      <div
         v-if="chartType === 'JZ'"
-        v-model="jzViewMode"
         class="chart-mode-group"
-        @change="changeJzViewMode"
+        role="radiogroup"
+        aria-label="净值图展示模式"
       >
-        <el-radio-button label="nav">净值走势</el-radio-button>
-        <el-radio-button label="benchmark">基金 vs 基准</el-radio-button>
-      </el-radio-group>
-      <el-radio-group
-        v-model="sltTimeRange"
+        <button
+          type="button"
+          class="chart-option chart-option--mode"
+          :class="{ 'is-active': jzViewMode === 'nav' }"
+          :aria-pressed="jzViewMode === 'nav' ? 'true' : 'false'"
+          @click="selectJzViewMode('nav')"
+        >
+          净值走势
+        </button>
+        <button
+          type="button"
+          class="chart-option chart-option--mode"
+          :class="{ 'is-active': jzViewMode === 'benchmark' }"
+          :aria-pressed="jzViewMode === 'benchmark' ? 'true' : 'false'"
+          @click="selectJzViewMode('benchmark')"
+        >
+          基金 vs 基准
+        </button>
+      </div>
+      <div
         class="chart-range-group"
-        @change="changeTimeRange"
+        role="radiogroup"
+        aria-label="图表时间范围"
       >
-        <el-radio-button label="y">月</el-radio-button>
-        <el-radio-button label="3y">季</el-radio-button>
-        <el-radio-button label="6y">半年</el-radio-button>
-        <el-radio-button label="n">一年</el-radio-button>
-        <el-radio-button label="3n">三年</el-radio-button>
-        <el-radio-button label="5n">五年</el-radio-button>
-      </el-radio-group>
+        <button
+          v-for="range in timeRangeOptions"
+          :key="range.value"
+          type="button"
+          class="chart-option chart-option--range"
+          :class="{ 'is-active': sltTimeRange === range.value }"
+          :aria-pressed="sltTimeRange === range.value ? 'true' : 'false'"
+          @click="selectTimeRange(range.value)"
+        >
+          {{ range.label }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -94,6 +115,14 @@ export default {
       chartTrustNote: "",
       modeHint: "",
       benchmarkFallbackRanges: ["y", "3y", "6y", "n", "3n", "5n"],
+      timeRangeOptions: [
+        { value: "y", label: "月" },
+        { value: "3y", label: "季" },
+        { value: "6y", label: "半年" },
+        { value: "n", label: "一年" },
+        { value: "3n", label: "三年" },
+        { value: "5n", label: "五年" },
+      ],
     };
   },
 
@@ -176,6 +205,20 @@ export default {
     }
   },
   methods: {
+    selectJzViewMode(value) {
+      if (this.jzViewMode === value) {
+        return;
+      }
+      this.jzViewMode = value;
+      this.changeJzViewMode();
+    },
+    selectTimeRange(value) {
+      if (this.sltTimeRange === value) {
+        return;
+      }
+      this.sltTimeRange = value;
+      this.changeTimeRange();
+    },
     buildLineSeries({
       name,
       data = [],
@@ -788,60 +831,63 @@ export default {
   padding-top: 4px;
 }
 
-.chart-mode-group {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.chart-mode-group:deep(.el-radio-button__inner) {
-  min-width: 88px;
-  padding: 6px 12px;
-  border-color: rgba(148, 163, 184, 0.22);
-  background: rgba(255, 255, 255, 0.72);
-  color: #475569;
-  box-shadow: none;
-}
-
-.chart-mode-group:deep(.el-radio-button:first-child .el-radio-button__inner) {
-  border-radius: 10px 0 0 10px;
-}
-
-.chart-mode-group:deep(.el-radio-button:last-child .el-radio-button__inner) {
-  border-radius: 0 10px 10px 0;
-}
-
-.chart-mode-group:deep(.el-radio-button__orig-radio:checked + .el-radio-button__inner) {
-  background: rgba(37, 99, 235, 0.1);
-  border-color: rgba(37, 99, 235, 0.4);
-  color: #1d4ed8;
-  box-shadow: none;
-}
-
+.chart-mode-group,
 .chart-range-group {
   display: inline-flex;
   flex-wrap: wrap;
   justify-content: center;
 }
 
-.chart-range-group:deep(.el-radio-button__inner) {
-  min-width: 48px;
-  padding: 7px 11px;
-  border-color: rgba(148, 163, 184, 0.22);
-  background: rgba(255, 255, 255, 0.7);
-  color: #475569;
+.chart-option {
+  border: 1px solid rgba(148, 163, 184, 0.22);
   box-shadow: none;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease,
+    color 0.16s ease;
 }
 
-.chart-range-group:deep(.el-radio-button:first-child .el-radio-button__inner) {
+.chart-option:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+.chart-option--mode {
+  min-width: 88px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #475569;
+}
+
+.chart-mode-group .chart-option:first-child {
   border-radius: 10px 0 0 10px;
 }
 
-.chart-range-group:deep(.el-radio-button:last-child .el-radio-button__inner) {
+.chart-mode-group .chart-option:last-child {
   border-radius: 0 10px 10px 0;
 }
 
-.chart-range-group:deep(.el-radio-button__orig-radio:checked + .el-radio-button__inner) {
+.chart-option--mode.is-active {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: rgba(37, 99, 235, 0.4);
+  color: #1d4ed8;
+}
+
+.chart-option--range {
+  min-width: 48px;
+  padding: 7px 11px;
+  background: rgba(255, 255, 255, 0.7);
+  color: #475569;
+}
+
+.chart-range-group .chart-option:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.chart-range-group .chart-option:last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+.chart-option--range.is-active {
   background: #2563eb;
   border-color: #2563eb;
   color: #ffffff;
@@ -870,21 +916,20 @@ export default {
   color: rgba(191, 219, 254, 0.72);
 }
 
-:global(.darkMode) .chart-mode-group .el-radio-button__inner,
-:global(.darkMode) .chart-range-group .el-radio-button__inner {
+:global(.darkMode) .chart-option {
   border-color: rgba(96, 165, 250, 0.16);
   background: rgba(15, 23, 42, 0.72);
   color: rgba(226, 232, 240, 0.78);
 }
 
-:global(.darkMode) .chart-mode-group .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+:global(.darkMode) .chart-option--mode.is-active {
   background: rgba(96, 165, 250, 0.16);
   border-color: rgba(96, 165, 250, 0.34);
   color: #bfdbfe;
   box-shadow: none;
 }
 
-:global(.darkMode) .chart-range-group .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+:global(.darkMode) .chart-option--range.is-active {
   background: #60a5fa;
   border-color: #60a5fa;
   color: #0f172a;

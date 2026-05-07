@@ -64,6 +64,18 @@ export function deriveFundCodesFromConfig(config = {}, mapFund = (fund) => fund)
     .filter(Boolean);
 }
 
+export function deriveAllFundsFromConfig(config = {}, mapFund = (fund) => fund) {
+  if (Array.isArray(config.fundListGroup) && config.fundListGroup.length) {
+    return config.fundListGroup
+      .flatMap((group) => mapGroupFunds(group, mapFund))
+      .filter(Boolean);
+  }
+
+  return Array.isArray(config.fundListM)
+    ? config.fundListM.map((fund) => mapFund(fund)).filter(Boolean)
+    : [];
+}
+
 export function deriveFundsFromGroup(group = {}) {
   return mapGroupFunds(group, (fund) => normalizeFundEntry(fund));
 }
