@@ -8,8 +8,10 @@
       class="main-echarts"
       ref="mainCharts"
     ></div>
-    <div v-if="emptyText" class="empty-text">{{ emptyText }}</div>
-    <div v-if="chartTrustNote" class="chart-trust-note">{{ chartTrustNote }}</div>
+    <div v-if="emptyText || chartTrustNote" class="chart-message-stack">
+      <div v-if="emptyText" class="empty-text">{{ emptyText }}</div>
+      <div v-if="chartTrustNote" class="chart-trust-note">{{ chartTrustNote }}</div>
+    </div>
   </div>
 </template>
 
@@ -809,17 +811,21 @@ export default {
 }
 
 .empty-text {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 8px;
   text-align: center;
   font-size: 12px;
+  line-height: 1.5;
   color: #909399;
 }
 
-.chart-trust-note {
+.chart-message-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
   margin-top: 4px;
+  padding: 0 8px 2px;
+}
+
+.chart-trust-note {
   text-align: center;
   font-size: 11px;
   line-height: 1.5;
