@@ -71,22 +71,33 @@
       <div class="transaction-dialog__form-card">
         <div class="transaction-dialog__form">
           <div class="transaction-dialog__entry-stack">
-            <label class="transaction-dialog__field transaction-dialog__field--date transaction-dialog__field--panel">
+            <div class="transaction-dialog__field transaction-dialog__field--date transaction-dialog__field--panel">
               <span class="transaction-dialog__field-label">交易日期</span>
-              <el-date-picker
-                v-model="modalTransactionDraft.date"
-                type="date"
-                size="mini"
-                value-format="yyyy-MM-dd"
-                format="yyyy-MM-dd"
-                placeholder="选择日期"
-                :clearable="false"
-                :editable="false"
-                :append-to-body="false"
-                popper-class="transaction-dialog-date-popper"
-                class="transaction-dialog__date-picker"
-              />
-            </label>
+              <div class="transaction-dialog__date-control">
+                <el-date-picker
+                  v-model="modalTransactionDraft.date"
+                  type="date"
+                  size="mini"
+                  value-format="yyyy-MM-dd"
+                  format="yyyy-MM-dd"
+                  placeholder="选择日期"
+                  :clearable="false"
+                  :editable="false"
+                  :append-to-body="true"
+                  popper-class="transaction-dialog-date-popper"
+                  class="transaction-dialog__date-picker"
+                />
+                <button
+                  v-if="modalTransactionDraft.date"
+                  type="button"
+                  class="transaction-dialog__date-clear"
+                  aria-label="清空交易日期"
+                  @click.stop="clearModalTransactionDate"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
             <div class="transaction-dialog__entry-main">
               <label v-if="modalTransactionOperation === 'add'" class="transaction-dialog__field transaction-dialog__field--panel transaction-dialog__field--hero">
                 <span class="transaction-dialog__field-label">加仓金额</span>
@@ -335,6 +346,11 @@ export default {
           this.closeHandler();
         }
       },
+    },
+  },
+  methods: {
+    clearModalTransactionDate() {
+      this.modalTransactionDraft.date = "";
     },
   },
 };

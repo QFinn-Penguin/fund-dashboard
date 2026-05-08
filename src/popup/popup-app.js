@@ -102,6 +102,7 @@ export default {
       list: [],
       loading: false,
       dragging: null,
+      dragTargetGroupIndex: -1,
       showAddSeciInput: false,
       seciList: ["1.000001", "1.000300", "0.399001", "0.399006"],
       allSeciList: [

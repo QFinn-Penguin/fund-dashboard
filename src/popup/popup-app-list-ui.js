@@ -484,12 +484,109 @@ export const listUiMethods = {
   },
   handleDragStart(e, item) {
     this.dragging = item;
+    if (e.dataTransfer && item.fundcode) {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", item.fundcode);
+    }
   },
   handleDragOver(e) {
     e.dataTransfer.dropEffect = "move";
   },
+  canDropFundOnGroup(index) {
+    return (
+      this.isEdit &&
+      this.dragging &&
+      this.dragging.fundcode &&
+      Number.isInteger(index) &&
+      index >= 0 &&
+      index < this.fundListGroup.length &&
+      index !== this.currentGroupIndex
+    );
+  },
+  handleGroupDragOver(e, index) {
+    if (!this.canDropFundOnGroup(index)) {
+      return;
+    }
+
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    this.dragTargetGroupIndex = index;
+    this.setGroupCursorPreview(index);
+  },
+  handleGroupDragLeave(index) {
+    if (this.dragTargetGroupIndex !== index) {
+      return;
+    }
+
+    this.dragTargetGroupIndex = -1;
+    this.clearGroupCursorPreview();
+  },
+  handleGroupDrop(e, index) {
+    if (!this.canDropFundOnGroup(index)) {
+      return;
+    }
+
+    e.preventDefault();
+    const draggedFundCode = this.dragging.fundcode;
+
+    this.syncEditFieldsToFundList();
+    const sourceFunds = [...this.getCurrentGroupWorkingFunds()];
+    const movingFund = sourceFunds.find((fund) => fund.code == draggedFundCode);
+
+    if (!movingFund) {
+      this.dragTargetGroupIndex = -1;
+      this.clearGroupCursorPreview();
+      return;
+    }
+
+    const nextFundListGroup = this.fundListGroup.map((group, groupIndex) => {
+      const funds = Array.isArray(group && group.funds) ? group.funds : [];
+
+      if (groupIndex === this.currentGroupIndex) {
+        return {
+          ...group,
+          focusFundcode: group.focusFundcode == draggedFundCode ? null : group.focusFundcode || null,
+          funds: funds.filter((fund) => fund && fund.code != draggedFundCode),
+        };
+      }
+
+      if (groupIndex === index) {
+        const hasFund = funds.some((fund) => fund && fund.code == draggedFundCode);
+        return {
+          ...group,
+          funds: hasFund ? funds : [...funds, movingFund],
+        };
+      }
+
+      return group;
+    });
+
+    const shouldClearFocusedFund = this.RealtimeFundcode == draggedFundCode;
+    if (shouldClearFocusedFund) {
+      this.RealtimeFundcode = null;
+    }
+
+    this.fundListGroup = nextFundListGroup;
+    this.replaceCurrentGroupWorkingFunds(sourceFunds.filter((fund) => fund.code != draggedFundCode));
+    this.dataList = this.dataList.filter((fund) => fund.fundcode != draggedFundCode);
+    this.dataListDft = this.dataListDft.filter((fund) => fund.fundcode != draggedFundCode);
+    this.dragTargetGroupIndex = -1;
+    this.clearGroupCursorPreview();
+    this.persistFundStorage(
+      shouldClearFocusedFund
+        ? {
+            RealtimeFundcode: null,
+          }
+        : {},
+      () => {
+        chrome.runtime.sendMessage({ type: "refresh" });
+      }
+    );
+  },
   handleDragEnd(e, item) {
     this.dragging = null;
+    this.dragTargetGroupIndex = -1;
+    this.clearGroupCursorPreview();
     if (item.fundcode) {
       this.persistFundStorage();
     } else if (item.f12) {

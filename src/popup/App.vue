@@ -242,12 +242,21 @@
                 v-for="(group, index) in fundListGroup"
                 :key="`group-${index}`"
                 class="btn group-btn"
-                :class="index === currentGroupIndex ? 'primary' : ''"
+                :class="[
+                  index === currentGroupIndex ? 'primary' : '',
+                  {
+                    'group-btn--drop-target': canDropFundOnGroup(index),
+                    'group-btn--drop-active': dragTargetGroupIndex === index,
+                  },
+                ]"
                 :ref="`groupBtn-${index}`"
                 @mouseenter="setGroupCursorPreview(index)"
                 @mouseleave="clearGroupCursorPreview"
                 @focus="setGroupCursorPreview(index)"
                 @blur="clearGroupCursorPreview"
+                @dragover="handleGroupDragOver($event, index)"
+                @dragleave="handleGroupDragLeave(index)"
+                @drop="handleGroupDrop($event, index)"
                 @click="switchGroup(index)"
               >
                 {{ getGroupLabel(group, index) }}

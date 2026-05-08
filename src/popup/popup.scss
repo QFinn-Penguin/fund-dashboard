@@ -647,6 +647,18 @@
   box-shadow: none;
 }
 
+.group-switcher--edit .group-btn--drop-target {
+  border-color: rgba(37, 99, 235, 0.32);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.group-switcher--edit .group-btn--drop-active {
+  color: var(--brand-primary);
+  border-color: rgba(37, 99, 235, 0.46);
+  background: rgba(59, 130, 246, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.18), 0 8px 16px rgba(59, 130, 246, 0.14);
+}
+
 .group-nav-btn {
   width: 28px;
   min-width: 28px;
@@ -1573,6 +1585,11 @@ table td {
   width: 100%;
 }
 
+.transaction-dialog__date-control {
+  position: relative;
+  min-width: 0;
+}
+
 .transaction-dialog__field--date .el-date-editor.el-input,
 .transaction-dialog__field--date .el-date-editor.el-input__inner {
   width: 100%;
@@ -1607,34 +1624,41 @@ table td {
 }
 
 .transaction-dialog__field--date .el-input__prefix {
-  left: auto;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-}
-
-.transaction-dialog__field--date .el-input__prefix-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.transaction-dialog__field--date .el-input__icon {
-  width: 16px;
-  line-height: 1;
-  color: rgba(100, 116, 139, 0.78);
-  transition: color 0.18s ease, opacity 0.18s ease;
-}
-
-.transaction-dialog__field--date:hover .el-input__icon,
-.transaction-dialog__field--date:focus-within .el-input__icon {
-  color: rgba(59, 130, 246, 0.82);
+  display: none;
 }
 
 .transaction-dialog__field--date .el-input__suffix {
   display: none;
+}
+
+.transaction-dialog__date-clear {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(100, 116, 139, 0.82);
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: color 0.18s ease, background-color 0.18s ease;
+}
+
+.transaction-dialog__date-clear:hover,
+.transaction-dialog__date-clear:focus-visible {
+  outline: none;
+  color: rgba(59, 130, 246, 0.92);
+  background: rgba(59, 130, 246, 0.1);
 }
 
 .transaction-dialog__field--date .el-input__inner::placeholder {
@@ -1691,6 +1715,29 @@ table td {
 .transaction-dialog-date-popper .el-picker-panel__icon-btn:hover {
   color: rgba(59, 130, 246, 0.9);
   transform: translateY(-1px);
+}
+
+.transaction-dialog-date-popper .el-picker-panel__icon-btn::before {
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.transaction-dialog-date-popper .el-icon-d-arrow-left::before {
+  content: "«";
+}
+
+.transaction-dialog-date-popper .el-icon-arrow-left::before {
+  content: "‹";
+}
+
+.transaction-dialog-date-popper .el-icon-arrow-right::before {
+  content: "›";
+}
+
+.transaction-dialog-date-popper .el-icon-d-arrow-right::before {
+  content: "»";
 }
 
 .transaction-dialog-date-popper .el-date-table {
