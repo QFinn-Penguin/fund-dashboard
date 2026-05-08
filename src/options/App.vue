@@ -553,14 +553,15 @@
           </div>
         </div>
 
-        <config-box
-          @success="successInput"
-          :darkMode="darkMode"
-          ref="configBox"
-          :top="40"
-        >
-        </config-box>
       </section>
+
+      <config-box
+        @success="successInput"
+        :darkMode="darkMode"
+        ref="configBox"
+        :top="40"
+      >
+      </config-box>
     </div>
   </div>
 </template>
