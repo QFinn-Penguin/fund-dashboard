@@ -482,9 +482,6 @@ export default {
         className += "darkMode ";
       }
       className += "more-width ";
-      if (this.shouldLockBrowseHeight) {
-        className += "browse-height-locked ";
-      }
       return className;
     },
     userSeciList() {

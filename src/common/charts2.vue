@@ -65,8 +65,10 @@ import "./js/customed.js";
 import "./js/dark.js";
 import {
   buildBenchmarkOverlaySeries,
+  buildYieldTransactionMarkers,
   fetchFundNetDiagram,
   fetchFundYieldDiagram,
+  normalizeDateText,
   normalizeNetHistory,
 } from "./fundDetailEnhance";
 require("echarts/lib/chart/line");
@@ -325,6 +327,91 @@ export default {
         },
       };
     },
+    formatMoneyDisplay(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) {
+        return "--";
+      }
+      return parsed.toLocaleString("zh-CN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    },
+    formatTransactionMarkerTooltip(params) {
+      const point = (params && params.data) || {};
+      const value = Array.isArray(point.value) ? point.value : [];
+      const yieldValue = Number(value[1]);
+      return [
+        `时间：${point.date || point.name || "--"}`,
+        `操作：${point.transactionLabel || "交易"}`,
+        point.amount !== undefined && point.amount !== null ? `金额：${this.formatMoneyDisplay(point.amount)}` : null,
+        point.shares !== undefined && point.shares !== null ? `份额：${Number(point.shares).toFixed(2)}` : null,
+        point.fee !== undefined && point.fee !== null ? `手续费：${this.formatMoneyDisplay(point.fee)}` : null,
+        point.nav !== undefined && point.nav !== null ? `净值：${Number(point.nav).toFixed(4)}` : null,
+        Number.isFinite(yieldValue) ? `对应收益：${yieldValue.toFixed(2)}%` : null,
+        point.note ? `说明：${point.note}` : null,
+      ]
+        .filter(Boolean)
+        .join("<br />");
+    },
+    buildTransactionMarkerSeries(transactionMarkers) {
+      if (!transactionMarkers || !transactionMarkers.markers.length) {
+        return null;
+      }
+
+      return {
+        type: "effectScatter",
+        name: transactionMarkers.legendLabel,
+        data: transactionMarkers.markers,
+        coordinateSystem: "cartesian2d",
+        symbol: (value, params) => {
+          return params && params.data && params.data.transactionType === "reduce" ? "triangle" : "pin";
+        },
+        symbolRotate: (value, params) => {
+          return params && params.data && params.data.transactionType === "reduce" ? 180 : 0;
+        },
+        symbolSize: (value, params) => {
+          return params && params.data && params.data.transactionType === "reduce" ? 22 : 28;
+        },
+        symbolOffset: (value, params) => {
+          return params && params.data && params.data.transactionType === "reduce" ? [0, 12] : [0, -14];
+        },
+        label: {
+          show: true,
+          color: "#ffffff",
+          fontSize: 10,
+          fontWeight: 700,
+          formatter: (params) => {
+            return params && params.data && params.data.transactionType === "reduce" ? "卖" : "买";
+          },
+        },
+        itemStyle: {
+          color: (params) => {
+            return params && params.data && params.data.transactionType === "reduce" ? "#f97316" : "#2563eb";
+          },
+          borderColor: this.darkMode ? "#0f172a" : "#ffffff",
+          borderWidth: 2,
+          shadowBlur: 14,
+          shadowColor: this.darkMode ? "rgba(15, 23, 42, 0.66)" : "rgba(15, 23, 42, 0.28)",
+        },
+        rippleEffect: {
+          brushType: "stroke",
+          scale: 2.2,
+        },
+        emphasis: {
+          itemStyle: {
+            borderWidth: 3,
+            shadowBlur: 18,
+          },
+        },
+        tooltip: {
+          show: true,
+          formatter: this.formatTransactionMarkerTooltip,
+        },
+        z: 50,
+        zlevel: 1,
+      };
+    },
     resetChartWithEmptyState(message = "") {
       this.option.legend = this.getBaseLegend(false);
       this.option.series = [
@@ -361,6 +448,11 @@ export default {
       });
     },
     renderYieldChart(dataList = [], indexName = "指数") {
+      const transactionMarkers = buildYieldTransactionMarkers({
+        yieldList: dataList,
+        transactions: Array.isArray(this.fund && this.fund.transactions) ? this.fund.transactions : [],
+      });
+      const markerSeries = this.buildTransactionMarkerSeries(transactionMarkers);
       this.option.legend = this.getBaseLegend(true);
       this.option.tooltip.formatter = (p) => {
         const mainPoint = p.find((item) => item.seriesName === "基金") || p[0];
@@ -390,8 +482,11 @@ export default {
           areaEnd: this.palette.secondaryAreaEnd,
           showArea: false,
         }),
-      ];
+      ].concat(markerSeries ? [markerSeries] : []);
       this.option.series[1].tooltip.show = false;
+      if (transactionMarkers.markers.length) {
+        this.modeHint = transactionMarkers.note;
+      }
       this.myChart.setOption(this.option);
     },
     renderNetValueChart(dataList = []) {
@@ -528,6 +623,33 @@ export default {
         "5n": "近5年",
       };
       return rangeLabelMap[range] || range;
+    },
+    getLatestDateText(list = [], dateKey = "") {
+      const dates = (Array.isArray(list) ? list : [])
+        .map((item) => normalizeDateText(item && item[dateKey]))
+        .filter(Boolean)
+        .sort();
+      return dates.length ? dates[dates.length - 1] : "";
+    },
+    isYieldHistoryStale(dataList = []) {
+      const latestYieldDate = this.getLatestDateText(dataList, "PDATE");
+      if (!latestYieldDate) {
+        return false;
+      }
+
+      const referenceDate = normalizeDateText(this.fund && this.fund.jzrq) || normalizeDateText(new Date().toISOString());
+      if (!referenceDate) {
+        return false;
+      }
+
+      const latestDate = new Date(`${latestYieldDate}T00:00:00`);
+      const currentDate = new Date(`${referenceDate}T00:00:00`);
+      if (Number.isNaN(latestDate.getTime()) || Number.isNaN(currentDate.getTime())) {
+        return false;
+      }
+
+      const diffDays = (currentDate.getTime() - latestDate.getTime()) / (24 * 60 * 60 * 1000);
+      return diffDays > 45;
     },
     async resolveBenchmarkNetView(fundCode, preferredRange) {
       const candidateRanges = [preferredRange].concat(
@@ -691,6 +813,26 @@ export default {
               ? yieldResponse.dataList
               : [];
             if (dataList.length) {
+              if (this.isYieldHistoryStale(dataList)) {
+                return this.fetchNetDiagramData().then((fallbackDataList) => {
+                  if (requestId !== this.requestVersion || fundCode !== this.fund.fundcode || timeRange !== this.sltTimeRange) {
+                    return;
+                  }
+                  if (fallbackDataList.length) {
+                    this.chartTrustNote = "累计收益接口数据过旧，已改用最新历史净值推算收益走势";
+                    this.modeHint = "该收益走势不含参考基准，仅用于修正过期接口数据";
+                    this.renderFallbackYieldChart(fallbackDataList);
+                  } else {
+                    this.renderYieldChart(
+                      dataList,
+                      yieldResponse && yieldResponse.expansion && yieldResponse.expansion.INDEXNAME
+                        ? `${yieldResponse.expansion.INDEXNAME}（参考基准）`
+                        : "参考基准"
+                    );
+                    this.modeHint = "累计收益接口数据可能过旧，且最新历史净值加载失败";
+                  }
+                });
+              }
               this.chartTrustNote = "以下收益对比基于参考基准，仅供辅助判断";
               this.renderYieldChart(
                 dataList,

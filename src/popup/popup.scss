@@ -67,10 +67,6 @@
   border-color: rgba(255, 255, 255, 0.46);
 }
 
-.container.more-width.browse-height-locked {
-  min-height: 540px;
-}
-
 .dashboard-shell {
   display: flex;
   flex-direction: column;
@@ -366,6 +362,8 @@
 }
 
 .container {
+  min-height: 450px;
+
   &.num-width-1 {
     min-width: 420px;
   }

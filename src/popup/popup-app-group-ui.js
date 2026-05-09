@@ -1,7 +1,5 @@
 import { isShortcutMatch } from "../common/popupPreferences";
 
-export const GROUP_UI_LOCK_ROW_THRESHOLD = 15;
-
 export const groupUiComputed = {
   displayDataList() {
     if (this.isEdit) {
@@ -39,13 +37,6 @@ export const groupUiComputed = {
   },
   showPagination() {
     return !this.isEdit && this.dataList.length > this.pageSize;
-  },
-  shouldLockBrowseHeight() {
-    return (
-      !this.isEdit &&
-      !this.detailShadow &&
-      this.visibleBrowseRowCount >= GROUP_UI_LOCK_ROW_THRESHOLD
-    );
   },
   canSlideGroupWindow() {
     return this.fundListGroup.length > 1;

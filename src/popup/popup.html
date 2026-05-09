@@ -18,11 +18,20 @@
     min-width: 785px;
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow: clip !important;
+    scrollbar-width: none;
     box-sizing: border-box;
     border: 0;
     outline: 0;
     background-color: #f5f7fb;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  #app::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
   }
 
   html.popup-root-dark,

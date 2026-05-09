@@ -669,6 +669,81 @@ export function buildBenchmarkOverlaySeries(historyList = [], yieldList = [], fa
   };
 }
 
+export function buildYieldTransactionMarkers({ yieldList = [], transactions = [] } = {}) {
+  const normalizedYieldList = normalizeYieldHistory(yieldList);
+  const visibleTransactions = Array.isArray(transactions)
+    ? transactions.filter((transaction) => {
+        return transaction && (transaction.type === "add" || transaction.type === "reduce");
+      })
+    : [];
+
+  if (!normalizedYieldList.length || !visibleTransactions.length) {
+    return {
+      markers: [],
+      legendLabel: "交易点",
+      note: "",
+    };
+  }
+
+  const yieldByDate = normalizedYieldList.reduce((result, item) => {
+    result[item.date] = item;
+    return result;
+  }, {});
+
+  const markers = visibleTransactions
+    .map((transaction, index) => {
+      const transactionDate = normalizeDateText(transaction.date);
+      if (!transactionDate) {
+        return null;
+      }
+
+      const firstYieldDate = normalizedYieldList[0] && normalizedYieldList[0].date;
+      const lastYieldDate = normalizedYieldList[normalizedYieldList.length - 1] && normalizedYieldList[normalizedYieldList.length - 1].date;
+      if (
+        (firstYieldDate && transactionDate < firstYieldDate) ||
+        (lastYieldDate && transactionDate > lastYieldDate)
+      ) {
+        return null;
+      }
+
+      const matchedDate = yieldByDate[transactionDate]
+        ? transactionDate
+        : normalizedYieldList
+            .filter((item) => item.date <= transactionDate)
+            .map((item) => item.date)
+            .pop() || "";
+
+      if (!matchedDate || !yieldByDate[matchedDate]) {
+        return null;
+      }
+
+      const yieldPoint = yieldByDate[matchedDate];
+      const isReduce = transaction.type === "reduce";
+
+      return {
+        name: matchedDate,
+        value: [matchedDate, yieldPoint.fundYield],
+        transactionType: transaction.type,
+        transactionLabel: isReduce ? "卖出" : "买入",
+        transactionIndex: index,
+        date: transactionDate,
+        amount: transaction.amount,
+        shares: transaction.shares,
+        fee: transaction.fee,
+        nav: transaction.nav,
+        matchedDate,
+        note: matchedDate !== transactionDate ? "已对齐到最近可用收益点" : "",
+      };
+    })
+    .filter(Boolean);
+
+  return {
+    markers,
+    legendLabel: "交易点",
+    note: markers.length ? `已叠加 ${markers.length} 个交易点` : "",
+  };
+}
+
 export function getPeriodDefinitions() {
   return PERIOD_DEFINITIONS.slice();
 }
