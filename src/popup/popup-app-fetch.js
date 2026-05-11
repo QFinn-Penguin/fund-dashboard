@@ -14,6 +14,57 @@ import { normalizeFundEntry } from "../common/fundSnapshot";
 import { deriveAllFundsFromConfig } from "../common/fundStorage";
 
 export const fetchMethods = {
+  getFundSnapshotRank(item = {}) {
+    const updateDate = extractDateText(item.gztime) || extractDateText(item.jzrq) || item.historyDateText || "";
+    return {
+      date: updateDate,
+      realtime: item.hasReplace ? 0 : 1,
+    };
+  },
+  shouldUseIncomingFundSnapshot(incoming = {}, cached = null) {
+    if (!cached) {
+      return true;
+    }
+
+    const incomingRank = this.getFundSnapshotRank(incoming);
+    const cachedRank = this.getFundSnapshotRank(cached);
+    if (incomingRank.date > cachedRank.date) {
+      return true;
+    }
+    if (incomingRank.date < cachedRank.date) {
+      return false;
+    }
+    return incomingRank.realtime >= cachedRank.realtime;
+  },
+  mergeLatestFundSnapshots(dataList = []) {
+    if (!this.latestFundSnapshotByCode || typeof this.latestFundSnapshotByCode !== "object") {
+      this.latestFundSnapshotByCode = {};
+    }
+
+    return dataList.map((item) => {
+      const fundCode = String((item && item.fundcode) || "").trim();
+      if (!fundCode) {
+        return item;
+      }
+
+      const cached = this.latestFundSnapshotByCode[fundCode];
+      const nextItem = this.shouldUseIncomingFundSnapshot(item, cached)
+        ? item
+        : {
+            ...cached,
+            transactions: item.transactions,
+            transactionDraft: item.transactionDraft,
+            positionOperation: item.positionOperation,
+            num: item.num,
+            cost: item.cost,
+            holdingCost: item.holdingCost,
+          };
+      this.latestFundSnapshotByCode[fundCode] = {
+        ...nextItem,
+      };
+      return nextItem;
+    });
+  },
   getData(type, options = {}) {
     const normalizedOptions =
       typeof options === "boolean"
@@ -185,9 +236,10 @@ export const fetchMethods = {
           })
           .filter(Boolean);
 
-        this.gainStatSourceDataList = dataList;
+        const mergedDataList = this.mergeLatestFundSnapshots(dataList);
+        this.gainStatSourceDataList = mergedDataList;
 
-        const displayDataList = dataList.filter((item) => {
+        const displayDataList = mergedDataList.filter((item) => {
           return currentFunds.some((fund) => fund.code == item.fundcode);
         });
 

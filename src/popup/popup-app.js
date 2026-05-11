@@ -198,6 +198,7 @@ export default {
       valuePulseMap: {},
       valuePulseTimers: {},
       latestFundFetchAt: 0,
+      latestFundSnapshotByCode: {},
       groupNextShortcut: DEFAULT_POPUP_SHORTCUTS.groupNextShortcut,
       pagePrevShortcut: DEFAULT_POPUP_SHORTCUTS.pagePrevShortcut,
       pageNextShortcut: DEFAULT_POPUP_SHORTCUTS.pageNextShortcut,
