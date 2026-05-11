@@ -116,6 +116,8 @@ export default {
       jzViewMode: "nav",
       chartTrustNote: "",
       modeHint: "",
+      showTransactionMarkers: true,
+      transactionMarkersNote: "",
       benchmarkFallbackRanges: ["y", "3y", "6y", "n", "3n", "5n"],
       timeRangeOptions: [
         { value: "y", label: "月" },
@@ -229,6 +231,7 @@ export default {
       areaEnd,
       showArea = true,
       latestLabelFormatter = null,
+      markPoints = [],
     }) {
       const series = {
         type: "line",
@@ -270,20 +273,18 @@ export default {
         };
       }
 
+      const markerData = [];
       if (typeof latestLabelFormatter === "function" && data.length) {
         const lastIndex = data.length - 1;
         const lastValue = Number(data[lastIndex]);
         if (Number.isFinite(lastValue)) {
-          series.markPoint = {
+          markerData.push({
+            coord: [this.option.xAxis.data[lastIndex], lastValue],
+            value: lastValue,
+            dataIndex: lastIndex,
+            isLatestPoint: true,
             symbol: "circle",
             symbolSize: 9,
-            data: [
-              {
-                coord: [this.option.xAxis.data[lastIndex], lastValue],
-                value: lastValue,
-                dataIndex: lastIndex,
-              },
-            ],
             label: {
               show: true,
               position: "left",
@@ -307,13 +308,33 @@ export default {
                 ? "rgba(96, 165, 250, 0.28)"
                 : "rgba(37, 99, 235, 0.22)",
             },
-          };
+          });
         }
+      }
+
+      const transactionMarkPoints = Array.isArray(markPoints) ? markPoints : [];
+      if (transactionMarkPoints.length) {
+        markerData.push(...transactionMarkPoints);
+      }
+
+      if (markerData.length) {
+        series.markPoint = {
+            symbol: "circle",
+            symbolSize: 9,
+            data: markerData,
+            tooltip: {
+              formatter: (params) => {
+                return params && params.data && params.data.transactionType
+                  ? this.formatTransactionMarkerTooltip(params)
+                  : `${params.name || "当前"}：${Number(params.value).toFixed(2)}%`;
+              },
+            },
+          };
       }
 
       return series;
     },
-    getBaseLegend(show = true) {
+    getBaseLegend(show = true, selected = {}) {
       return {
         show,
         top: 0,
@@ -321,6 +342,7 @@ export default {
         icon: "roundRect",
         itemWidth: 12,
         itemHeight: 8,
+        selected,
         textStyle: {
           color: this.legendTextColor,
           fontSize: 11,
@@ -354,62 +376,82 @@ export default {
         .filter(Boolean)
         .join("<br />");
     },
-    buildTransactionMarkerSeries(transactionMarkers) {
+    buildTransactionMarkPoints(transactionMarkers) {
       if (!transactionMarkers || !transactionMarkers.markers.length) {
-        return null;
+        return [];
       }
 
-      return {
-        type: "effectScatter",
-        name: transactionMarkers.legendLabel,
-        data: transactionMarkers.markers,
-        coordinateSystem: "cartesian2d",
-        symbol: (value, params) => {
-          return params && params.data && params.data.transactionType === "reduce" ? "triangle" : "pin";
-        },
-        symbolRotate: (value, params) => {
-          return params && params.data && params.data.transactionType === "reduce" ? 180 : 0;
-        },
-        symbolSize: (value, params) => {
-          return params && params.data && params.data.transactionType === "reduce" ? 22 : 28;
-        },
-        symbolOffset: (value, params) => {
-          return params && params.data && params.data.transactionType === "reduce" ? [0, 12] : [0, -14];
-        },
-        label: {
-          show: true,
-          color: "#ffffff",
-          fontSize: 10,
-          fontWeight: 700,
-          formatter: (params) => {
-            return params && params.data && params.data.transactionType === "reduce" ? "卖" : "买";
+      return transactionMarkers.markers.map((marker) => {
+        const isReduce = marker.transactionType === "reduce";
+        return {
+          ...marker,
+          name: marker.transactionLabel || marker.name,
+          coord: marker.value,
+          value: Array.isArray(marker.value) ? marker.value[1] : marker.value,
+          symbol: isReduce ? "triangle" : "pin",
+          symbolRotate: 0,
+          symbolSize: isReduce ? 20 : 30,
+          symbolOffset: isReduce ? [0, 8] : [0, -17],
+          label: {
+            show: true,
+            color: "#ffffff",
+            fontSize: 10,
+            fontWeight: 700,
+            position: isReduce ? "bottom" : "inside",
+            formatter: isReduce ? "卖" : "买",
           },
-        },
-        itemStyle: {
-          color: (params) => {
-            return params && params.data && params.data.transactionType === "reduce" ? "#f97316" : "#2563eb";
-          },
-          borderColor: this.darkMode ? "#0f172a" : "#ffffff",
-          borderWidth: 2,
-          shadowBlur: 14,
-          shadowColor: this.darkMode ? "rgba(15, 23, 42, 0.66)" : "rgba(15, 23, 42, 0.28)",
-        },
-        rippleEffect: {
-          brushType: "stroke",
-          scale: 2.2,
-        },
-        emphasis: {
           itemStyle: {
+            color: isReduce ? "#2563eb" : "#ef4444",
+            borderColor: this.darkMode ? "#0f172a" : "#ffffff",
             borderWidth: 3,
             shadowBlur: 18,
+            shadowColor: this.darkMode
+              ? "rgba(15, 23, 42, 0.72)"
+              : isReduce
+                ? "rgba(37, 99, 235, 0.38)"
+                : "rgba(239, 68, 68, 0.4)",
           },
+        };
+      });
+    },
+    buildTransactionLegendSeries(markPoints = [], legendName = "交易点") {
+      return {
+        type: "line",
+        name: legendName,
+        data: [],
+        showSymbol: false,
+        lineStyle: {
+          opacity: 0,
         },
         tooltip: {
-          show: true,
-          formatter: this.formatTransactionMarkerTooltip,
+          show: false,
         },
-        z: 50,
-        zlevel: 1,
+        markPoint: {
+          symbol: "circle",
+          symbolSize: 9,
+          data: markPoints,
+          tooltip: {
+            formatter: this.formatTransactionMarkerTooltip,
+          },
+        },
+      };
+    },
+    splitTransactionMarkPoints(markPoints = []) {
+      return {
+        buy: markPoints.filter((point) => point.transactionType !== "reduce"),
+        sell: markPoints.filter((point) => point.transactionType === "reduce"),
+      };
+    },
+    buildTransactionLegendSeriesList(markPoints = []) {
+      const groupedMarkPoints = this.splitTransactionMarkPoints(markPoints);
+      return []
+        .concat(groupedMarkPoints.buy.length ? [this.buildTransactionLegendSeries(groupedMarkPoints.buy, "买入")] : [])
+        .concat(groupedMarkPoints.sell.length ? [this.buildTransactionLegendSeries(groupedMarkPoints.sell, "卖出")] : []);
+    },
+    buildYieldLegend(selected = {}) {
+      return {
+        ...this.getBaseLegend(true, selected),
+        data: ["买入", "卖出"],
       };
     },
     resetChartWithEmptyState(message = "") {
@@ -452,8 +494,14 @@ export default {
         yieldList: dataList,
         transactions: Array.isArray(this.fund && this.fund.transactions) ? this.fund.transactions : [],
       });
-      const markerSeries = this.buildTransactionMarkerSeries(transactionMarkers);
-      this.option.legend = this.getBaseLegend(true);
+      const transactionMarkPoints = this.showTransactionMarkers
+        ? this.buildTransactionMarkPoints(transactionMarkers)
+        : [];
+      this.transactionMarkersNote = transactionMarkers.note;
+      this.option.legend = this.buildYieldLegend({
+        买入: this.showTransactionMarkers,
+        卖出: this.showTransactionMarkers,
+      });
       this.option.tooltip.formatter = (p) => {
         const mainPoint = p.find((item) => item.seriesName === "基金") || p[0];
         const secondaryPoint = p.find((item) => item.seriesName === indexName);
@@ -482,9 +530,9 @@ export default {
           areaEnd: this.palette.secondaryAreaEnd,
           showArea: false,
         }),
-      ].concat(markerSeries ? [markerSeries] : []);
+      ].concat(this.buildTransactionLegendSeriesList(transactionMarkPoints));
       this.option.series[1].tooltip.show = false;
-      if (transactionMarkers.markers.length) {
+      if (this.showTransactionMarkers && transactionMarkers.markers.length) {
         this.modeHint = transactionMarkers.note;
       }
       this.myChart.setOption(this.option);
@@ -593,9 +641,26 @@ export default {
         return;
       }
 
-      this.option.legend = this.getBaseLegend(false);
+      const fallbackYieldList = dataList.map((item, index) => ({
+        PDATE: item && item.FSRQ,
+        YIELD: fallbackSeries[index],
+      }));
+      const transactionMarkers = buildYieldTransactionMarkers({
+        yieldList: fallbackYieldList,
+        transactions: Array.isArray(this.fund && this.fund.transactions) ? this.fund.transactions : [],
+      });
+      const transactionMarkPoints = this.showTransactionMarkers
+        ? this.buildTransactionMarkPoints(transactionMarkers)
+        : [];
+      this.transactionMarkersNote = transactionMarkers.note;
+
+      this.option.legend = this.buildYieldLegend({
+        买入: this.showTransactionMarkers,
+        卖出: this.showTransactionMarkers,
+      });
       this.option.tooltip.formatter = (p) => {
-        return `时间：${p[0].name}<br />累计收益：${Number(p[0].value).toFixed(2)}%`;
+        const mainPoint = p.find((item) => item.seriesName === "累计收益") || p[0];
+        return `时间：${mainPoint.name}<br />累计收益：${Number(mainPoint.value).toFixed(2)}%`;
       };
       this.option.xAxis.data = dataList.map((item) => item.FSRQ);
       this.option.series = [
@@ -607,7 +672,10 @@ export default {
           areaEnd: this.palette.primaryAreaEnd,
           latestLabelFormatter: ({ value }) => `当前 ${Number(value).toFixed(2)}%`,
         }),
-      ];
+      ].concat(this.buildTransactionLegendSeriesList(transactionMarkPoints));
+      if (this.showTransactionMarkers && transactionMarkers.markers.length) {
+        this.modeHint = transactionMarkers.note;
+      }
       this.myChart.setOption(this.option);
     },
     fetchNetDiagramData() {
@@ -700,6 +768,13 @@ export default {
         this.chartEL,
         this.darkMode ? "dark" : "customed"
       );
+      this.myChart.on("legendselectchanged", (event) => {
+        if (event && (event.name === "买入" || event.name === "卖出")) {
+          const selected = event.selected || {};
+          this.showTransactionMarkers = selected["买入"] !== false || selected["卖出"] !== false;
+          this.modeHint = this.showTransactionMarkers ? this.transactionMarkersNote : "";
+        }
+      });
       this.option = {
         tooltip: {
           trigger: "axis",
@@ -819,8 +894,6 @@ export default {
                     return;
                   }
                   if (fallbackDataList.length) {
-                    this.chartTrustNote = "累计收益接口数据过旧，已改用最新历史净值推算收益走势";
-                    this.modeHint = "该收益走势不含参考基准，仅用于修正过期接口数据";
                     this.renderFallbackYieldChart(fallbackDataList);
                   } else {
                     this.renderYieldChart(

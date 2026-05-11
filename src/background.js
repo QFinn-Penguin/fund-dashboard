@@ -373,7 +373,10 @@ var createActionContextMenu = () => {
   });
 };
 
+var isInitialized = false;
 var initializeExtension = () => {
+  if (isInitialized) return;
+  isInitialized = true;
   createActionContextMenu();
   ensureLocalOnlyStorageMigrated(() => {
     getData();
