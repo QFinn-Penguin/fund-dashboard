@@ -608,6 +608,23 @@
   box-shadow: none;
 }
 
+.group-name-input {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  width: 88px;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(37, 99, 235, 0.32);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.12), 0 8px 16px rgba(59, 130, 246, 0.12);
+  font-size: 11px;
+  line-height: 24px;
+  outline: none;
+}
+
 .group-switcher .group-btn.primary {
   color: var(--brand-primary);
   border-color: transparent;
@@ -662,6 +679,22 @@
   min-width: 28px;
   padding: 6px 0;
   flex: 0 0 auto;
+}
+
+.group-add-btn {
+  min-width: 56px;
+  padding: 6px 9px;
+  flex: 0 0 auto;
+  border-color: rgba(37, 99, 235, 0.18);
+  color: var(--brand-primary);
+  background: rgba(59, 130, 246, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.group-add-btn:hover,
+.group-add-btn:focus-visible {
+  border-color: rgba(37, 99, 235, 0.3);
+  background: rgba(59, 130, 246, 0.16);
 }
 
 .sub-change {
@@ -1794,6 +1827,62 @@ table td {
 .transaction-dialog-date-popper .el-date-table td.disabled span {
   color: rgba(148, 163, 184, 0.52);
   background: transparent;
+}
+
+.popup-root-dark .transaction-dialog-date-popper.el-picker-panel {
+  border-color: rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top left, rgba(90, 164, 255, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(25, 30, 38, 0.98), rgba(17, 21, 28, 0.98));
+  box-shadow: 0 22px 46px rgba(0, 0, 0, 0.34);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-date-picker__header {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-date-picker__header-label {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-picker-panel__icon-btn {
+  color: rgba(255, 255, 255, 0.54);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-picker-panel__icon-btn:hover {
+  color: rgba(144, 202, 255, 0.94);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-date-table th {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-date-table td span {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-date-table td.available:hover span {
+  background: rgba(90, 164, 255, 0.16);
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-date-table td.today span {
+  color: rgba(144, 202, 255, 0.96);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-date-table td.current:not(.disabled span) {
+  background: linear-gradient(180deg, rgba(90, 164, 255, 0.92), rgba(59, 130, 246, 0.88));
+  color: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.26);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-date-table td.prev-month span,
+.popup-root-dark .transaction-dialog-date-popper .el-date-table td.next-month span {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.popup-root-dark .transaction-dialog-date-popper .el-date-table td.disabled span {
+  color: rgba(255, 255, 255, 0.2);
 }
 
 .transaction-dialog__input--support {
@@ -3465,6 +3554,26 @@ tbody tr:hover {
     border-color: transparent;
     background: transparent;
     box-shadow: none;
+  }
+
+  .group-name-input {
+    border-color: rgba(90, 164, 255, 0.36);
+    color: var(--text-primary);
+    background: rgba(17, 21, 28, 0.94);
+    box-shadow: inset 0 0 0 1px rgba(90, 164, 255, 0.16), 0 8px 18px rgba(0, 0, 0, 0.2);
+  }
+
+  .group-add-btn {
+    border-color: rgba(90, 164, 255, 0.24);
+    color: var(--brand-primary);
+    background: rgba(90, 164, 255, 0.14);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .group-add-btn:hover,
+  .group-add-btn:focus-visible {
+    border-color: rgba(90, 164, 255, 0.36);
+    background: rgba(90, 164, 255, 0.2);
   }
 
   .group-strip__cursor {

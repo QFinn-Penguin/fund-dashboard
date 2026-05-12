@@ -134,6 +134,93 @@ export const groupUiWatch = {
 };
 
 export const groupUiMethods = {
+  createGroup() {
+    this.syncEditFieldsToFundList();
+
+    const nextGroupIndex = this.fundListGroup.length;
+    const nextGroup = {
+      name: `分组 ${nextGroupIndex + 1}`,
+      focusFundcode: null,
+      funds: [],
+    };
+
+    this.fundListGroup = [...this.fundListGroup, nextGroup];
+    this.currentGroupIndex = nextGroupIndex;
+    this.RealtimeFundcode = null;
+    this.resetPagination();
+    this.replaceCurrentGroupWorkingFunds([]);
+    this.dataList = [];
+    this.dataListDft = [];
+    this.persistFundStorage(
+      {
+        RealtimeFundcode: null,
+      },
+      () => {
+        chrome.runtime.sendMessage({ type: "refresh" });
+      }
+    );
+  },
+  startGroupNameEdit(index) {
+    if (!this.isEdit || !this.fundListGroup[index]) {
+      return;
+    }
+
+    this.editingGroupIndex = index;
+    this.editingGroupName = this.getGroupLabel(this.fundListGroup[index], index);
+    this.$nextTick(() => {
+      const refs = this.$refs[`groupNameInput-${index}`];
+      const input = Array.isArray(refs) ? refs[0] : refs;
+      if (input && typeof input.focus === "function") {
+        input.focus();
+        input.select();
+      }
+    });
+  },
+  cancelGroupNameEdit() {
+    this.editingGroupIndex = -1;
+    this.editingGroupName = "";
+    this.$nextTick(() => {
+      this.queueGroupCursorSync();
+    });
+  },
+  saveGroupName(index) {
+    if (this.editingGroupIndex !== index || !this.fundListGroup[index]) {
+      return;
+    }
+
+    const nextName = String(this.editingGroupName || "").trim();
+    this.editingGroupIndex = -1;
+    this.editingGroupName = "";
+
+    if (!nextName) {
+      this.$nextTick(() => {
+        this.queueGroupCursorSync();
+      });
+      return;
+    }
+
+    const currentName = this.getGroupLabel(this.fundListGroup[index], index);
+    if (nextName === currentName) {
+      this.$nextTick(() => {
+        this.queueGroupCursorSync();
+      });
+      return;
+    }
+
+    this.fundListGroup = this.fundListGroup.map((group, groupIndex) => {
+      if (groupIndex !== index) {
+        return group;
+      }
+      return {
+        ...group,
+        name: nextName,
+      };
+    });
+    this.persistFundStorage();
+    this.$nextTick(() => {
+      this.queueGroupCursorSync();
+    });
+  },
   handleGroupCursorViewportResize() {
     this.queueGroupCursorSync();
     this.syncGroupViewportState();

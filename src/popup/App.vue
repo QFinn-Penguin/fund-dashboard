@@ -224,6 +224,15 @@
           <strong>{{ activeGroupLabel }}</strong>
         </div>
         <button
+          v-if="isEdit"
+          class="btn group-add-btn"
+          type="button"
+          title="添加分组"
+          @click="createGroup"
+        >
+          + 新增分组
+        </button>
+        <button
           class="btn group-nav-btn"
           :disabled="!canScrollGroupViewportLeft"
           @click="scrollGroupViewport(-1)"
@@ -238,29 +247,46 @@
               :style="groupCursorStyle"
               aria-hidden="true"
             ></span>
-              <button
+              <template
                 v-for="(group, index) in fundListGroup"
-                :key="`group-${index}`"
-                class="btn group-btn"
-                :class="[
-                  index === currentGroupIndex ? 'primary' : '',
-                  {
-                    'group-btn--drop-target': canDropFundOnGroup(index),
-                    'group-btn--drop-active': dragTargetGroupIndex === index,
-                  },
-                ]"
-                :ref="`groupBtn-${index}`"
-                @mouseenter="setGroupCursorPreview(index)"
-                @mouseleave="clearGroupCursorPreview"
-                @focus="setGroupCursorPreview(index)"
-                @blur="clearGroupCursorPreview"
-                @dragover="handleGroupDragOver($event, index)"
-                @dragleave="handleGroupDragLeave(index)"
-                @drop="handleGroupDrop($event, index)"
-                @click="switchGroup(index)"
               >
-                {{ getGroupLabel(group, index) }}
-              </button>
+                <input
+                  v-if="isEdit && editingGroupIndex === index"
+                  :key="`group-input-${index}`"
+                  v-model="editingGroupName"
+                  class="group-name-input"
+                  :ref="`groupNameInput-${index}`"
+                  type="text"
+                  @click.stop
+                  @keydown.enter.prevent="saveGroupName(index)"
+                  @keydown.esc.prevent="cancelGroupNameEdit"
+                  @blur="saveGroupName(index)"
+                />
+                <button
+                  v-else
+                  :key="`group-${index}`"
+                  class="btn group-btn"
+                  :class="[
+                    index === currentGroupIndex ? 'primary' : '',
+                    {
+                      'group-btn--drop-target': canDropFundOnGroup(index),
+                      'group-btn--drop-active': dragTargetGroupIndex === index,
+                    },
+                  ]"
+                  :ref="`groupBtn-${index}`"
+                  @mouseenter="setGroupCursorPreview(index)"
+                  @mouseleave="clearGroupCursorPreview"
+                  @focus="setGroupCursorPreview(index)"
+                  @blur="clearGroupCursorPreview"
+                  @dragover="handleGroupDragOver($event, index)"
+                  @dragleave="handleGroupDragLeave(index)"
+                  @drop="handleGroupDrop($event, index)"
+                  @click="switchGroup(index)"
+                  @dblclick.stop="startGroupNameEdit(index)"
+                >
+                  {{ getGroupLabel(group, index) }}
+                </button>
+              </template>
           </div>
         </div>
         <button

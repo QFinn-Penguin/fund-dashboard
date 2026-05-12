@@ -211,6 +211,8 @@ export default {
       groupCursorWidth: 0,
       groupCursorHeight: 0,
       groupCursorFrame: null,
+      editingGroupIndex: -1,
+      editingGroupName: "",
       transactionDialogVisible: false,
       activeTransactionFundCode: "",
       modalTransactionOperation: DEFAULT_POSITION_OPERATION,

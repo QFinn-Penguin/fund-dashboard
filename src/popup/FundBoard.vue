@@ -26,7 +26,7 @@
             <div class="fund-board__edit-title">持仓控制面板</div>
             <div class="fund-board__edit-meta">拖拽排序已启用 · 单击仓位管理进入记录维护</div>
           </div>
-          <div class="fund-board__edit-badge">{{ dataList.length }} / {{ fundListGroup.length || 1 }}</div>
+          <div class="fund-board__edit-badge">{{ dataList.length }} 只基金 · {{ fundListGroup.length || 1 }} 个分组</div>
         </div>
         <table :class="[tableHeight, { 'fund-table--browse': !isEdit, 'fund-table--edit': isEdit }]">
           <thead>
