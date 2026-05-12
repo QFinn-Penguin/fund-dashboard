@@ -74,6 +74,24 @@ export const groupUiComputed = {
 
     return this.currentGroupIndex;
   },
+  pendingDeleteGroup() {
+    if (this.pendingDeleteGroupIndex < 0) {
+      return null;
+    }
+    return this.fundListGroup[this.pendingDeleteGroupIndex] || null;
+  },
+  pendingDeleteGroupLabel() {
+    if (!this.pendingDeleteGroup) {
+      return "";
+    }
+    return this.getGroupLabel(this.pendingDeleteGroup, this.pendingDeleteGroupIndex);
+  },
+  pendingDeleteGroupFundCount() {
+    const funds = this.pendingDeleteGroup && Array.isArray(this.pendingDeleteGroup.funds)
+      ? this.pendingDeleteGroup.funds
+      : [];
+    return funds.length;
+  },
   groupCursorStyle() {
     if (!this.groupCursorVisible) {
       return {};
@@ -161,7 +179,7 @@ export const groupUiMethods = {
     );
   },
   startGroupNameEdit(index) {
-    if (!this.isEdit || !this.fundListGroup[index]) {
+    if (!this.isEdit || index === 0 || !this.fundListGroup[index]) {
       return;
     }
 
@@ -219,6 +237,85 @@ export const groupUiMethods = {
     this.persistFundStorage();
     this.$nextTick(() => {
       this.queueGroupCursorSync();
+    });
+  },
+  requestDeleteGroup(index) {
+    if (!this.isEdit || index === 0 || !this.fundListGroup[index] || this.fundListGroup.length <= 1) {
+      return;
+    }
+
+    this.cancelGroupNameEdit();
+    this.pendingDeleteGroupIndex = index;
+    const groupFunds = Array.isArray(this.fundListGroup[index].funds) ? this.fundListGroup[index].funds : [];
+    if (!groupFunds.length) {
+      this.deleteGroup(index, "remove");
+      return;
+    }
+
+    this.deleteGroupDialogVisible = true;
+  },
+  cancelDeleteGroup() {
+    this.deleteGroupDialogVisible = false;
+    this.pendingDeleteGroupIndex = -1;
+  },
+  confirmDeleteGroup(mode) {
+    const index = this.pendingDeleteGroupIndex;
+    this.deleteGroupDialogVisible = false;
+    this.pendingDeleteGroupIndex = -1;
+    this.deleteGroup(index, mode === "move" ? "move" : "remove");
+  },
+  deleteGroup(index, mode) {
+    if (index <= 0 || !this.fundListGroup[index] || this.fundListGroup.length <= 1) {
+      return;
+    }
+
+    this.syncEditFieldsToFundList();
+    this.syncCurrentGroupFunds();
+
+    const deletingGroup = this.fundListGroup[index];
+    const deletingFunds = Array.isArray(deletingGroup.funds) ? deletingGroup.funds : [];
+    let nextFundListGroup = this.fundListGroup.filter((group, groupIndex) => groupIndex !== index);
+
+    if (mode === "move" && deletingFunds.length) {
+      const defaultGroup = nextFundListGroup[0] || { name: "默认分组", focusFundcode: null, funds: [] };
+      const defaultFunds = Array.isArray(defaultGroup.funds) ? defaultGroup.funds : [];
+      const existingCodes = defaultFunds.reduce((result, fund) => {
+        if (fund && fund.code) {
+          result[fund.code] = true;
+        }
+        return result;
+      }, {});
+      const movingFunds = deletingFunds.filter((fund) => fund && fund.code && !existingCodes[fund.code]);
+      nextFundListGroup = nextFundListGroup.map((group, groupIndex) => {
+        if (groupIndex !== 0) {
+          return group;
+        }
+        return {
+          ...group,
+          funds: [...defaultFunds, ...movingFunds],
+        };
+      });
+    }
+
+    let nextGroupIndex = this.currentGroupIndex;
+    if (this.currentGroupIndex === index) {
+      nextGroupIndex = Math.min(index, nextFundListGroup.length - 1);
+    } else if (this.currentGroupIndex > index) {
+      nextGroupIndex = this.currentGroupIndex - 1;
+    }
+
+    nextGroupIndex = Math.max(nextGroupIndex, 0);
+    this.fundListGroup = nextFundListGroup;
+    this.currentGroupIndex = nextGroupIndex;
+    const nextGroup = this.fundListGroup[nextGroupIndex];
+    const nextFunds = Array.isArray(nextGroup && nextGroup.funds) ? nextGroup.funds : [];
+    this.RealtimeFundcode = nextGroup ? nextGroup.focusFundcode || null : null;
+    this.resetPagination();
+    this.replaceCurrentGroupWorkingFunds(nextFunds);
+    this.loadingList = true;
+    this.persistFundStorage({}, () => {
+      this.getData();
+      chrome.runtime.sendMessage({ type: "refresh" });
     });
   },
   handleGroupCursorViewportResize() {

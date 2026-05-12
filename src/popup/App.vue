@@ -251,7 +251,7 @@
                 v-for="(group, index) in fundListGroup"
               >
                 <input
-                  v-if="isEdit && editingGroupIndex === index"
+                  v-if="isEdit && index !== 0 && editingGroupIndex === index"
                   :key="`group-input-${index}`"
                   v-model="editingGroupName"
                   class="group-name-input"
@@ -284,7 +284,17 @@
                   @click="switchGroup(index)"
                   @dblclick.stop="startGroupNameEdit(index)"
                 >
-                  {{ getGroupLabel(group, index) }}
+                  <span class="group-btn__label">{{ getGroupLabel(group, index) }}</span>
+                  <span
+                    v-if="isEdit && index !== 0"
+                    class="group-delete-btn"
+                    role="button"
+                    tabindex="0"
+                    title="删除分组"
+                    @click.stop="requestDeleteGroup(index)"
+                    @keydown.enter.stop.prevent="requestDeleteGroup(index)"
+                    @keydown.space.stop.prevent="requestDeleteGroup(index)"
+                  >×</span>
                 </button>
               </template>
           </div>
@@ -297,6 +307,28 @@
           ›
         </button>
       </div>
+      <el-dialog
+        :visible.sync="deleteGroupDialogVisible"
+        custom-class="group-delete-dialog"
+        :title="`删除${pendingDeleteGroupLabel}分组`"
+        width="360px"
+        :append-to-body="false"
+        :modal="true"
+        :close-on-click-modal="false"
+        top="120px"
+      >
+        <div class="group-delete-dialog__body">
+          <div class="group-delete-dialog__desc">
+            <span>该分组包含 {{ pendingDeleteGroupFundCount }} 只基金。</span>
+            <span>请选择删除后如何处理这些基金。</span>
+          </div>
+        </div>
+        <div class="group-delete-dialog__actions">
+          <button class="btn" type="button" @click="cancelDeleteGroup">取消</button>
+          <button class="btn" type="button" @click="confirmDeleteGroup('remove')">一并移除</button>
+          <button class="btn primary" type="button" @click="confirmDeleteGroup('move')">移动到默认分组</button>
+        </div>
+      </el-dialog>
       <div v-if="showPagination" class="pagination-row pagination-row--floating-summary">
         <div class="pagination-row__summary">
           <span class="pagination-row__pill">第 {{ currentPage }} / {{ pageCount }} 页</span>

@@ -599,6 +599,9 @@
   z-index: 1;
   margin: 0;
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   min-height: 26px;
   padding: 0 10px;
   font-size: 11px;
@@ -606,6 +609,35 @@
   background: transparent;
   border-color: transparent;
   box-shadow: none;
+}
+
+.group-btn__label {
+  display: inline-block;
+  max-width: 86px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-delete-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 999px;
+  color: rgba(100, 116, 139, 0.74);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  transition: color 0.16s ease, background-color 0.16s ease;
+}
+
+.group-delete-btn:hover,
+.group-delete-btn:focus-visible {
+  color: rgba(225, 29, 72, 0.94);
+  background: rgba(225, 29, 72, 0.1);
+  outline: none;
 }
 
 .group-name-input {
@@ -695,6 +727,99 @@
 .group-add-btn:focus-visible {
   border-color: rgba(37, 99, 235, 0.3);
   background: rgba(59, 130, 246, 0.16);
+}
+
+.group-delete-dialog .el-dialog__body {
+  padding: 10px 18px 16px;
+}
+
+.group-delete-dialog {
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(249, 251, 255, 0.98);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 20px 44px rgba(15, 23, 42, 0.16);
+}
+
+.group-delete-dialog .el-dialog__header {
+  padding: 16px 18px 0;
+}
+
+.group-delete-dialog .el-dialog__title {
+  color: var(--text-primary);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.group-delete-dialog .el-dialog__headerbtn {
+  top: 14px;
+  right: 14px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.group-delete-dialog .el-dialog__headerbtn:hover,
+.group-delete-dialog .el-dialog__headerbtn:focus-visible {
+  background: rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.group-delete-dialog .el-dialog__headerbtn:focus-visible {
+  outline: none;
+}
+
+.group-delete-dialog .el-dialog__headerbtn .el-dialog__close {
+  position: relative;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  font-size: 0;
+  line-height: 0;
+}
+
+.group-delete-dialog .el-dialog__headerbtn .el-dialog__close::before,
+.group-delete-dialog .el-dialog__headerbtn .el-dialog__close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 1.6px;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: center;
+}
+
+.group-delete-dialog .el-dialog__headerbtn .el-dialog__close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.group-delete-dialog .el-dialog__headerbtn .el-dialog__close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.group-delete-dialog__body {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.group-delete-dialog__desc {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.group-delete-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .sub-change {
@@ -3574,6 +3699,40 @@ tbody tr:hover {
   .group-add-btn:focus-visible {
     border-color: rgba(90, 164, 255, 0.36);
     background: rgba(90, 164, 255, 0.2);
+  }
+
+  .group-delete-btn {
+    color: rgba(255, 255, 255, 0.48);
+  }
+
+  .group-delete-btn:hover,
+  .group-delete-btn:focus-visible {
+    color: rgba(255, 122, 138, 0.96);
+    background: rgba(255, 122, 138, 0.14);
+  }
+
+  .group-delete-dialog {
+    background: rgba(23, 27, 34, 0.98);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 22px 48px rgba(0, 0, 0, 0.32);
+  }
+
+  .group-delete-dialog .el-dialog__title {
+    color: var(--text-primary);
+  }
+
+  .group-delete-dialog .el-dialog__headerbtn:hover,
+  .group-delete-dialog .el-dialog__headerbtn:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .group-delete-dialog .el-dialog__headerbtn .el-dialog__close {
+    color: rgba(255, 255, 255, 0.58);
+  }
+
+  .group-delete-dialog .el-dialog__headerbtn:hover .el-dialog__close,
+  .group-delete-dialog .el-dialog__headerbtn:focus-visible .el-dialog__close {
+    color: rgba(255, 255, 255, 0.9);
   }
 
   .group-strip__cursor {

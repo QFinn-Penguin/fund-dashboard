@@ -213,6 +213,8 @@ export default {
       groupCursorFrame: null,
       editingGroupIndex: -1,
       editingGroupName: "",
+      deleteGroupDialogVisible: false,
+      pendingDeleteGroupIndex: -1,
       transactionDialogVisible: false,
       activeTransactionFundCode: "",
       modalTransactionOperation: DEFAULT_POSITION_OPERATION,
