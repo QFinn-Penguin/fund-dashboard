@@ -36,7 +36,11 @@ export const listUiMethods = {
       const shares = roundValue(currentItem.num, 4);
       const cost = roundValue(currentItem.cost, 4);
       const holdingCost = roundValue(shares * cost, 2);
-      const transactions = syncBaselineTransaction(fund, shares, cost);
+      const hasPositionEvents = Array.isArray(fund.transactions)
+        && fund.transactions.some((transaction) => transaction && transaction.type !== "baseline");
+      const transactions = hasPositionEvents
+        ? fund.transactions
+        : syncBaselineTransaction(fund, shares, cost);
 
       return {
         ...fund,

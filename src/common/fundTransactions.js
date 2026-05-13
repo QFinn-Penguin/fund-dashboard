@@ -271,7 +271,7 @@ export function derivePositionSnapshot(transactions = []) {
 
     if (transaction.type === "add") {
       shares = roundValue(shares + transaction.shares, 4);
-      costBasis = roundValue(costBasis + transaction.amount + transaction.fee, 2);
+      costBasis = roundValue(costBasis + transaction.amount, 2);
       return;
     }
 
