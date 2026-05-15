@@ -21,6 +21,22 @@ let echarts = require("echarts/lib/echarts");
 import "./js/customed.js";
 import "./js/dark.js";
 import { requestWithBackground } from "./request";
+import { fetchFundArchiveHtml, parseArchiveHtml } from "./fundDetailEnhance";
+
+const TRACKING_INDEX_CODE_MAP = {
+  中证电子指数: "2.930652",
+  国证半导体芯片指数: "0.980017",
+  国证芯片指数: "0.980017",
+  中证白酒指数: "0.399997",
+  中证医疗指数: "2.930633",
+  中证新能源汽车指数: "2.930997",
+  创业板指数: "0.399006",
+  沪深300指数: "1.000300",
+  中证500指数: "1.000905",
+  中证机器人指数: "2.H30590",
+  中证人工智能产业指数: "2.931071",
+  中证人工智能主题指数: "2.930713",
+};
 
 require("echarts/lib/chart/line");
 
@@ -54,6 +70,7 @@ export default {
       loading: false,
       emptyText: "",
       chartTrustNote: "盘中估值为实时估算值，最终以正式净值为准",
+      realtimeEstimateTimer: null,
       timeData: [
         "09:30",
         "09:31",
@@ -365,6 +382,7 @@ export default {
     this.init();
   },
   beforeDestroy() {
+    this.clearRealtimeEstimateTimer();
     if (this.myChart) {
       if (typeof this.myChart.clear === "function") {
         this.myChart.clear();
@@ -685,6 +703,308 @@ export default {
       this.option.legend = this.getBaseLegend(false);
       this.option.graphic = [];
     },
+    clearRealtimeEstimateTimer() {
+      if (this.realtimeEstimateTimer) {
+        clearTimeout(this.realtimeEstimateTimer);
+        this.realtimeEstimateTimer = null;
+      }
+    },
+    getRealtimeEstimateStorageKey(date) {
+      return `fund-dashboard:intraday-estimate:${this.fund.fundcode}:${date}`;
+    },
+    parseRealtimeEstimateTime(gztime) {
+      if (typeof gztime !== "string") {
+        return null;
+      }
+
+      const match = gztime.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})/);
+      if (!match) {
+        return null;
+      }
+
+      return {
+        date: match[1],
+        time: match[2],
+      };
+    },
+    readRealtimeEstimateSamples(date) {
+      const storageKey = this.getRealtimeEstimateStorageKey(date);
+      try {
+        const cacheText = window.localStorage.getItem(storageKey);
+        const samples = JSON.parse(cacheText || "[]");
+        return Array.isArray(samples) ? samples : [];
+      } catch (e) {
+        return [];
+      }
+    },
+    writeRealtimeEstimateSamples(date, samples) {
+      const storageKey = this.getRealtimeEstimateStorageKey(date);
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify(samples));
+      } catch (e) {
+        return false;
+      }
+      return true;
+    },
+    mergeRealtimeEstimateSample(sample) {
+      const samples = this.readRealtimeEstimateSamples(sample.date).filter(
+        (item) =>
+          item &&
+          item.time !== sample.time &&
+          this.timeData.indexOf(item.time) !== -1
+      );
+      samples.push(sample);
+      samples.sort((a, b) => {
+        const aIndex = this.timeData.indexOf(a.time);
+        const bIndex = this.timeData.indexOf(b.time);
+        if (aIndex !== -1 && bIndex !== -1) {
+          return aIndex - bIndex;
+        }
+        return String(a.time).localeCompare(String(b.time));
+      });
+      this.writeRealtimeEstimateSamples(sample.date, samples);
+      return samples;
+    },
+    fetchRealtimeEstimatePoint() {
+      const url = `https://fundgz.1234567.com.cn/js/${
+        this.fund.fundcode
+      }.js?rt=${new Date().getTime()}`;
+
+      return requestWithBackground({
+        method: "get",
+        url,
+      }).then((res) => {
+        const data = res.data || {};
+        const parsedTime = this.parseRealtimeEstimateTime(data.gztime);
+        const percent = Number(data.gszzl);
+        const nav = Number(data.gsz);
+        const baseNav = Number(data.dwjz);
+
+        if (!parsedTime || !Number.isFinite(percent) || !Number.isFinite(nav)) {
+          return null;
+        }
+
+        return {
+          date: parsedTime.date,
+          time: parsedTime.time,
+          percent,
+          nav,
+          baseNav: Number.isFinite(baseNav) ? baseNav : 0,
+        };
+      });
+    },
+    scheduleRealtimeEstimateRefresh() {
+      if (this.realtimeEstimateTimer) {
+        clearTimeout(this.realtimeEstimateTimer);
+      }
+
+      this.realtimeEstimateTimer = setTimeout(() => {
+        this.loadRealtimeEstimateSamples({ fallbackOnEmpty: false });
+      }, 60000);
+    },
+    renderRealtimeEstimateSamples(samples) {
+      const pointList = Array.isArray(samples) ? samples : [];
+      if (!pointList.length) {
+        return false;
+      }
+
+      const latestPoint = pointList[pointList.length - 1];
+      const percentSeries = pointList.map((item) => Number(item.percent) || 0);
+      const maxRange = Number(this.handle_num(percentSeries)) || 1;
+
+      this.DWJZ = latestPoint.baseNav || 0;
+      this.option.tooltip.formatter = (p) => {
+        const current = pointList[p[0].dataIndex] || {};
+        const navText = Number.isFinite(Number(current.nav))
+          ? Number(current.nav).toFixed(4)
+          : "--";
+        return `时间：${p[0].name}<br />估算涨跌幅：${Number(
+          p[0].value
+        ).toFixed(2)}%<br />估算净值：${navText}元`;
+      };
+      this.option.xAxis.data = pointList.map((item) => item.time);
+      this.option.series[0].data = percentSeries.map((item) => item.toFixed(2));
+      this.option.series[1].data = percentSeries.map((item) => item.toFixed(2));
+      this.option.yAxis[0].min = -maxRange;
+      this.option.yAxis[0].max = maxRange;
+      this.option.yAxis[0].interval = maxRange / 4;
+      this.option.yAxis[1].min = -maxRange;
+      this.option.yAxis[1].max = maxRange;
+      this.option.yAxis[1].interval = maxRange / 4;
+      this.updateChartVisuals(
+        this.option.series[0].data,
+        ({ value }) => `当前 ${Number(value).toFixed(2)}%`
+      );
+      this.myChart.setOption(this.option);
+      this.emptyText =
+        pointList.length > 1
+          ? "已使用实时估值采样绘制当日走势"
+          : "已显示当前实时估值；打开详情页后将每分钟补充走势点";
+      return true;
+    },
+    loadRealtimeEstimateSamples({ fallbackOnEmpty = true } = {}) {
+      return this.fetchRealtimeEstimatePoint()
+        .then((sample) => {
+          if (!sample) {
+            if (fallbackOnEmpty) {
+              return this.loadNetDiagramFallback();
+            }
+            return;
+          }
+
+          const samples = this.mergeRealtimeEstimateSample(sample);
+          this.renderRealtimeEstimateSamples(samples);
+          this.scheduleRealtimeEstimateRefresh();
+        })
+        .catch(() => {
+          if (fallbackOnEmpty) {
+            return this.loadNetDiagramFallback();
+          }
+        });
+    },
+    normalizeTrackingTargetName(value) {
+      return String(value || "")
+        .replace(/收益率/g, "")
+        .replace(/[×*]\s*\d+(?:\.\d+)?%/g, "")
+        .replace(/\+.*$/g, "")
+        .replace(/\s+/g, "")
+        .trim();
+    },
+    resolveTrackingSecid(trackingTarget) {
+      const normalizedName = this.normalizeTrackingTargetName(trackingTarget);
+      if (!normalizedName) {
+        return null;
+      }
+
+      return Object.keys(TRACKING_INDEX_CODE_MAP).reduce((matched, key) => {
+        if (matched) {
+          return matched;
+        }
+        return normalizedName.indexOf(key) > -1 || key.indexOf(normalizedName) > -1
+          ? {
+              secid: TRACKING_INDEX_CODE_MAP[key],
+              name: key,
+            }
+          : null;
+      }, null);
+    },
+    fetchTrackingTargetInfo() {
+      return fetchFundArchiveHtml(this.fund.fundcode).then((archiveHtml) => {
+        const archiveData = parseArchiveHtml(archiveHtml);
+        const trackingTarget = archiveData.trackingTarget || archiveData.officialBenchmark || "";
+        return this.resolveTrackingSecid(trackingTarget);
+      });
+    },
+    fetchTrackingTrendData(secid) {
+      const url = `https://push2his.eastmoney.com/api/qt/stock/trends2/get?secid=${secid}&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13&fields2=f51,f52,f53,f54,f55,f56,f57,f58&iscr=0&iscca=0&ndays=1&_=${new Date().getTime()}`;
+      return requestWithBackground({
+        method: "get",
+        url,
+      }).then((res) => {
+        const data = res.data && res.data.data ? res.data.data : null;
+        const trends = data && Array.isArray(data.trends) ? data.trends : [];
+        if (!data || !trends.length) {
+          return null;
+        }
+
+        return {
+          name: data.name || "跟踪标的",
+          preClose: Number(data.preClose || data.prePrice),
+          trends,
+        };
+      });
+    },
+    buildTrackingTrendPoints(trendData) {
+      const preClose = Number(trendData && trendData.preClose);
+      if (!Number.isFinite(preClose) || preClose <= 0) {
+        return [];
+      }
+
+      return trendData.trends
+        .map((item) => {
+          const columns = String(item || "").split(",");
+          const time = columns[0] ? columns[0].slice(11, 16) : "";
+          const close = Number(columns[2]);
+          if (!time || this.timeData.indexOf(time) === -1 || !Number.isFinite(close)) {
+            return null;
+          }
+          return {
+            time,
+            percent: ((close / preClose) - 1) * 100,
+            close,
+          };
+        })
+        .filter(Boolean);
+    },
+    applyFundEstimateCalibration(points) {
+      const fundEstimate = Number(this.fund && this.fund.gszzl);
+      if (!Number.isFinite(fundEstimate) || !points.length) {
+        return points;
+      }
+
+      const lastPoint = points[points.length - 1];
+      const offset = fundEstimate - lastPoint.percent;
+      return points.map((item) => ({
+        ...item,
+        percent: item.percent + offset,
+      }));
+    },
+    renderTrackingTrend(points, targetInfo) {
+      const pointList = this.applyFundEstimateCalibration(points);
+      if (!pointList.length) {
+        return false;
+      }
+
+      const percentSeries = pointList.map((item) => Number(item.percent) || 0);
+      const maxRange = Number(this.handle_num(percentSeries)) || 1;
+      const baseNav = Number(this.fund && (this.fund.dwjz || this.fund.gsz));
+      this.DWJZ = Number.isFinite(baseNav) ? baseNav : 0;
+      this.option.tooltip.formatter = (p) => {
+        const current = pointList[p[0].dataIndex] || {};
+        const estimateNav = this.DWJZ
+          ? (this.DWJZ * (1 + 0.01 * Number(p[0].value))).toFixed(4)
+          : "--";
+        return `时间：${p[0].name}<br />代理涨跌幅：${Number(
+          p[0].value
+        ).toFixed(2)}%<br />估算净值：${estimateNav}元<br />参考标的：${
+          targetInfo.name
+        }`;
+      };
+      this.option.xAxis.data = pointList.map((item) => item.time);
+      this.option.series[0].name = "代理估算涨跌幅";
+      this.option.series[1].name = "代理估算净值";
+      this.option.series[0].data = percentSeries.map((item) => item.toFixed(2));
+      this.option.series[1].data = percentSeries.map((item) => item.toFixed(2));
+      this.option.yAxis[0].min = -maxRange;
+      this.option.yAxis[0].max = maxRange;
+      this.option.yAxis[0].interval = maxRange / 4;
+      this.option.yAxis[1].min = -maxRange;
+      this.option.yAxis[1].max = maxRange;
+      this.option.yAxis[1].interval = maxRange / 4;
+      this.updateChartVisuals(
+        this.option.series[0].data,
+        ({ value }) => `当前 ${Number(value).toFixed(2)}%`
+      );
+      this.myChart.setOption(this.option);
+      this.emptyText = `按${targetInfo.name}分时走势校准估算，仅供参考`;
+      return true;
+    },
+    loadTrackingProxyTrend() {
+      this.clearRealtimeEstimateTimer();
+      return this.fetchTrackingTargetInfo()
+        .then((targetInfo) => {
+          if (!targetInfo) {
+            return this.loadNetDiagramFallback();
+          }
+          return this.fetchTrackingTrendData(targetInfo.secid).then((trendData) => {
+            const points = this.buildTrackingTrendPoints(trendData);
+            if (!points.length || !this.renderTrackingTrend(points, targetInfo)) {
+              return this.loadNetDiagramFallback();
+            }
+          });
+        })
+        .catch(() => this.loadNetDiagramFallback());
+    },
     getData() {
       this.loading = true;
       this.emptyText = "";
@@ -701,7 +1021,7 @@ export default {
             : [];
 
           if (!rawDataList.length) {
-            return this.loadNetDiagramFallback();
+            return this.loadTrackingProxyTrend();
           }
 
           let dataList = rawDataList.map((item) => item.split(","));
@@ -712,6 +1032,7 @@ export default {
             (+item[2]).toFixed(2)
           );
           let aa = this.handle_num(this.option.series[0].data);
+          this.clearRealtimeEstimateTimer();
           this.DWJZ = res.data.Expansion ? res.data.Expansion.DWJZ : 0;
           this.option.yAxis[0].min = -aa;
           this.option.yAxis[0].max = aa;
@@ -727,7 +1048,7 @@ export default {
           this.myChart.setOption(this.option);
         })
         .catch(() => {
-          return this.loadNetDiagramFallback();
+          return this.loadTrackingProxyTrend();
         })
         .finally(() => {
           this.loading = false;

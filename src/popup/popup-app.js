@@ -222,6 +222,9 @@ export default {
       modalTransactionDraft: createTransactionDraft(),
       modalTransactionMessage: "",
       modalTransactionMessageType: "success",
+      modalTransactionFeeRate: null,
+      modalTransactionFeeAuto: true,
+      modalTransactionFeeRequestId: 0,
       positionTogglePreview: "",
     };
   },

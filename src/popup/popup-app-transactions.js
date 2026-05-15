@@ -9,6 +9,7 @@ import {
   toFiniteNumber,
 } from "../common/fundTransactions";
 import { normalizeFundEntry } from "../common/fundSnapshot";
+import { fetchFundBaseInfo, resolvePurchaseFeeRate } from "../common/fundDetailEnhance";
 
 export const transactionComputed = {
   activeTransactionFund() {
@@ -166,6 +167,9 @@ export const transactionMethods = {
     this.activeTransactionFundCode = item.fundcode;
     this.modalTransactionOperation = normalizePositionOperation(item.positionOperation);
     this.positionTogglePreview = "";
+    this.modalTransactionFeeRate = null;
+    this.modalTransactionFeeAuto = true;
+    this.modalTransactionFeeRequestId += 1;
     this.modalTransactionDraft = {
       ...createTransactionDraft(),
       ...(item.transactionDraft || {}),
@@ -173,6 +177,7 @@ export const transactionMethods = {
     this.modalTransactionMessage = "";
     this.modalTransactionMessageType = "success";
     this.transactionDialogVisible = true;
+    this.loadModalPurchaseFeeRate(item.fundcode);
   },
   closeTransactionDialog() {
     this.transactionDialogVisible = false;
@@ -180,13 +185,18 @@ export const transactionMethods = {
     this.modalTransactionOperation = DEFAULT_POSITION_OPERATION;
     this.positionTogglePreview = "";
     this.reduceSharePresetPreviewKey = "";
+    this.modalTransactionFeeRate = null;
+    this.modalTransactionFeeAuto = true;
+    this.modalTransactionFeeRequestId += 1;
     this.modalTransactionDraft = createTransactionDraft();
     this.modalTransactionMessage = "";
     this.modalTransactionMessageType = "success";
   },
   resetModalTransactionDraft() {
     this.reduceSharePresetPreviewKey = "";
+    this.modalTransactionFeeAuto = true;
     this.modalTransactionDraft = createTransactionDraft();
+    this.applyAutoPurchaseFee();
     this.modalTransactionMessage = "";
     this.modalTransactionMessageType = "success";
   },
@@ -194,6 +204,9 @@ export const transactionMethods = {
     this.modalTransactionOperation = normalizePositionOperation(operation);
     this.positionTogglePreview = "";
     this.reduceSharePresetPreviewKey = "";
+    if (this.modalTransactionOperation === "add") {
+      this.applyAutoPurchaseFee();
+    }
     this.modalTransactionMessage = "";
     this.modalTransactionMessageType = "success";
   },
@@ -212,6 +225,60 @@ export const transactionMethods = {
   },
   clearReduceSharePresetPreview() {
     this.reduceSharePresetPreviewKey = "";
+  },
+  loadModalPurchaseFeeRate(fundcode) {
+    const requestId = this.modalTransactionFeeRequestId + 1;
+    this.modalTransactionFeeRequestId = requestId;
+    const code = String(fundcode || "").trim();
+    if (!code) {
+      this.modalTransactionFeeRate = null;
+      return;
+    }
+
+    fetchFundBaseInfo(code)
+      .then((baseInfo) => {
+        if (this.modalTransactionFeeRequestId !== requestId || this.activeTransactionFundCode != code) {
+          return;
+        }
+        this.modalTransactionFeeRate = resolvePurchaseFeeRate(baseInfo || {});
+        this.applyAutoPurchaseFee();
+      })
+      .catch(() => {
+        if (this.modalTransactionFeeRequestId === requestId) {
+          this.modalTransactionFeeRate = null;
+        }
+      });
+  },
+  calculateAutoPurchaseFee(amount) {
+    const numericAmount = toFiniteNumber(amount, 0);
+    const feeRate = Number(this.modalTransactionFeeRate);
+    if (numericAmount <= 0 || !Number.isFinite(feeRate) || feeRate <= 0) {
+      return 0;
+    }
+    return roundValue(numericAmount * feeRate * 0.01, 2);
+  },
+  applyAutoPurchaseFee() {
+    if (this.modalTransactionOperation !== "add" || !this.modalTransactionFeeAuto) {
+      return;
+    }
+    const nextFee = this.calculateAutoPurchaseFee(this.modalTransactionDraft.amount);
+    this.$set(this.modalTransactionDraft, "fee", nextFee > 0 ? `${nextFee}` : "");
+  },
+  handleModalTransactionAmountInput(value) {
+    if (this.modalTransactionDraft.amount !== value) {
+      this.$set(this.modalTransactionDraft, "amount", value);
+    }
+    this.modalTransactionMessage = "";
+    this.modalTransactionMessageType = "success";
+    this.applyAutoPurchaseFee();
+  },
+  handleModalTransactionFeeInput(value) {
+    if (this.modalTransactionDraft.fee !== value) {
+      this.$set(this.modalTransactionDraft, "fee", value);
+    }
+    this.modalTransactionFeeAuto = false;
+    this.modalTransactionMessage = "";
+    this.modalTransactionMessageType = "success";
   },
   applyReduceSharePreset(ratio) {
     const fund = this.activeTransactionFund;

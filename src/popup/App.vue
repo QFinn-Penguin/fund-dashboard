@@ -443,6 +443,8 @@
       :setReduceSharePresetPreviewHandler="setReduceSharePresetPreview"
       :clearReduceSharePresetPreviewHandler="clearReduceSharePresetPreview"
       :applyReduceSharePresetHandler="applyReduceSharePreset"
+      :handleModalTransactionAmountInputHandler="handleModalTransactionAmountInput"
+      :handleModalTransactionFeeInputHandler="handleModalTransactionFeeInput"
       :saveModalTransactionHandler="saveModalTransaction"
       :resetModalTransactionDraftHandler="resetModalTransactionDraft"
       :removeModalTransactionHandler="removeModalTransaction"

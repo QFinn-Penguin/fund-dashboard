@@ -475,6 +475,36 @@ function isExplicitNotApplicableFee(value) {
   return /不适用|不收取|免收/i.test(text);
 }
 
+function hasFeeSourceValue(value) {
+  if (value === null || value === undefined) {
+    return false;
+  }
+  const text = String(value).trim();
+  return !!text && text !== "--";
+}
+
+function parsePurchaseFeeRateValue(value) {
+  if (!hasFeeSourceValue(value) || isExplicitNotApplicableFee(value)) {
+    return null;
+  }
+
+  const text = String(value).trim().replace(/%/g, "");
+  const parsed = parseNumber(text);
+  if (parsed === null || parsed <= 0) {
+    return null;
+  }
+
+  return parsed;
+}
+
+export function resolvePurchaseFeeRate(baseInfo = {}) {
+  if (hasFeeSourceValue(baseInfo.RATE)) {
+    return parsePurchaseFeeRateValue(baseInfo.RATE);
+  }
+
+  return parsePurchaseFeeRateValue(baseInfo.SOURCERATE);
+}
+
 export function parseArchiveHtml(archiveHtml = "") {
   const html = String(archiveHtml || "");
   return Object.keys(ARCHIVE_FIELD_MATCHERS).reduce((result, key) => {

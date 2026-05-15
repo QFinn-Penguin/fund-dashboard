@@ -106,6 +106,7 @@
                   type="text"
                   class="transaction-dialog__input transaction-dialog__input--hero"
                   placeholder="请输入金额"
+                  @input="handleModalTransactionAmountInputHandler($event.target.value)"
                 />
               </label>
               <label v-else class="transaction-dialog__field transaction-dialog__field--panel transaction-dialog__field--hero transaction-dialog__field--hero-reduce">
@@ -148,6 +149,7 @@
                   type="text"
                   class="transaction-dialog__input transaction-dialog__input--support"
                   placeholder="可填 0"
+                  @input="handleModalTransactionFeeInputHandler($event.target.value)"
                 />
               </label>
             </div>
@@ -312,6 +314,14 @@ export default {
       required: true,
     },
     applyReduceSharePresetHandler: {
+      type: Function,
+      required: true,
+    },
+    handleModalTransactionAmountInputHandler: {
+      type: Function,
+      required: true,
+    },
+    handleModalTransactionFeeInputHandler: {
       type: Function,
       required: true,
     },
